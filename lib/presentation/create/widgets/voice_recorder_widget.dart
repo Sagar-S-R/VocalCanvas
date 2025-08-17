@@ -29,7 +29,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
     super.initState();
     _initSpeechToText();
 
-    // Load API key from .env
+    
     _apiKey = dotenv.env['GROQ_API_KEY'] ?? '';
   }
 
