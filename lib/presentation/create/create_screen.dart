@@ -14,193 +14,245 @@ class CreateScreen extends StatefulWidget {
 }
 
 class _CreateScreenState extends State<CreateScreen> {
-  String? _generatedPost;
-  File? _imageFile;
-  XFile? _webImageFile;
-  Uint8List? _webImageBytes;
   final PostService _postService = PostService();
+  String _content = '';
+  String _title = '';
+  String _location = '';
+  List<String> _hashtags = [];
+  dynamic _image; // Can be File or XFile
+  bool _isUploading = false;
+  bool _isGenerating = false;
 
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-
-    if (pickedFile != null) {
+  void _onGenerationComplete(
+    String content,
+    String title,
+    String location,
+    List<String> hashtags,
+  ) {
+    if (mounted) {
       setState(() {
-        if (kIsWeb) {
-          _webImageFile = pickedFile;
-          // Load the image bytes for web display
-          pickedFile.readAsBytes().then((bytes) {
-            setState(() {
-              _webImageBytes = bytes;
-            });
-          });
-        } else {
-          _imageFile = File(pickedFile.path);
-        }
+        _content = content;
+        _title = title;
+        _location = location;
+        _hashtags = hashtags;
+        _isGenerating = false; // Generation is complete
       });
     }
   }
 
-  void _createPost() {
-    if (_generatedPost != null) {
-      // In a real app, you would get the actual user ID.
-      _postService.createPost(
-        content: _generatedPost!,
-        userId: 'current_user',
-        imageFile: _imageFile,
-        webImageFile: _webImageFile,
+  Future<void> _pickImage() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      if (kIsWeb) {
+        setState(() {
+          _image = image;
+        });
+      } else {
+        setState(() {
+          _image = File(image.path);
+        });
+      }
+    }
+  }
+
+  Future<void> _createPost() async {
+    if (_content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please generate content first.')),
       );
-      Navigator.pop(context);
+      return;
+    }
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      await _postService.createPost(
+        content: _content,
+        title: _title,
+        location: _location,
+        hashtags: _hashtags,
+        imageFile: !kIsWeb && _image != null ? _image as File : null,
+        webImageFile: kIsWeb && _image != null ? _image as XFile : null,
+        userId: 'current_user', // Replace with actual user ID
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post created successfully!')),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to create post: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            color: const Color(0xFFF0EBE3),
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(40.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Create a New Post',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Lora',
-                      ),
+      appBar: AppBar(
+        title: const Text('Create New Post'),
+        backgroundColor: const Color(0xFFF0EBE3),
+        elevation: 0,
+        foregroundColor: Colors.black,
+      ),
+      backgroundColor: const Color(0xFFF0EBE3),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (_content.isEmpty)
+                  VoiceRecorderWidget(
+                    onGenerationComplete: (content, title, location, hashtags) {
+                      setState(() {
+                        _isGenerating = true;
+                      });
+                      _onGenerationComplete(content, title, location, hashtags);
+                    },
+                  )
+                else
+                  Container(), // Placeholder
+
+                if (_isGenerating)
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text("Generating content..."),
+                      ],
                     ),
-                    const SizedBox(height: 16),
+                  ),
 
-                    // Conditionally show the recorder or the result.
-                    if (_generatedPost == null) ...[
-                      const Text(
-                        'Tap the button and tell us about your art. Your voice is the spark.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.black54, fontSize: 20),
-                      ),
-                      const SizedBox(height: 60),
-                      VoiceRecorderWidget(
-                        onGenerationComplete: (String text) {
-                          setState(() {
-                            _generatedPost = text;
-                          });
-                        },
-                      ),
-                    ] else ...[
-                      // Show generated text and image upload
-                      GeneratedPostCard(
-                        generatedText: _generatedPost!,
-                        imageFile: _imageFile,
-                        webImageBytes: _webImageBytes,
-                        onPickImage: _pickImage,
-                        onCreatePost: _createPost,
-                      ),
-                    ],
-                  ],
+                if (_content.isNotEmpty && !_isGenerating)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.2),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _title,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(_content),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(_location),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6.0,
+                          runSpacing: 6.0,
+                          children:
+                              _hashtags
+                                  .map((tag) => Chip(label: Text(tag)))
+                                  .toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 32),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[400]!),
+                    ),
+                    child:
+                        _image == null
+                            ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_a_photo,
+                                    size: 50,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text('Tap to add an image'),
+                                ],
+                              ),
+                            )
+                            : ClipRRect(
+                              borderRadius: BorderRadius.circular(11),
+                              child:
+                                  (kIsWeb
+                                      ? Image.network(
+                                        _image.path,
+                                        fit: BoxFit.cover,
+                                      )
+                                      : Image.file(
+                                        _image as File,
+                                        fit: BoxFit.cover,
+                                      )),
+                            ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 32),
+                _isUploading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                      onPressed: _createPost,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 0, 41, 36),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 50,
+                          vertical: 15,
+                        ),
+                        textStyle: const TextStyle(fontSize: 18),
+                      ),
+                      child: const Text('Create Post'),
+                    ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class GeneratedPostCard extends StatelessWidget {
-  final String generatedText;
-  final File? imageFile;
-  final Uint8List? webImageBytes;
-  final VoidCallback onPickImage;
-  final VoidCallback onCreatePost;
-
-  const GeneratedPostCard({
-    super.key,
-    required this.generatedText,
-    this.imageFile,
-    this.webImageBytes,
-    required this.onPickImage,
-    required this.onCreatePost,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            generatedText,
-            style: const TextStyle(fontSize: 18, fontFamily: 'Lora'),
-          ),
-          const SizedBox(height: 24),
-          if (imageFile != null || webImageBytes != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child:
-                  kIsWeb && webImageBytes != null
-                      ? Image.memory(
-                        webImageBytes!,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      )
-                      : imageFile != null
-                      ? Image.file(
-                        imageFile!,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      )
-                      : Container(),
-            ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: onPickImage,
-            icon: const Icon(Icons.image),
-            label: const Text('Upload Image'),
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: const Color.fromARGB(255, 0, 41, 36),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              textStyle: const TextStyle(fontSize: 16),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: onCreatePost,
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.green.shade800,
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-              textStyle: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            child: const Text('Create Post'),
-          ),
-        ],
+        ),
       ),
     );
   }

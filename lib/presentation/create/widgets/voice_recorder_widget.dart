@@ -6,7 +6,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 
 class VoiceRecorderWidget extends StatefulWidget {
-  final Function(String) onGenerationComplete;
+  final Function(
+    String content,
+    String title,
+    String location,
+    List<String> hashtags,
+  )
+  onGenerationComplete;
 
   const VoiceRecorderWidget({super.key, required this.onGenerationComplete});
 
@@ -39,19 +45,23 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
   @override
   void dispose() {
     _audioRecorder.dispose();
-    _speechToText.cancel();
+    if (_speechToText.isListening) {
+      _speechToText.cancel();
+    }
     super.dispose();
   }
 
   Future<void> _generatePostWithGroq(String transcription) async {
     if (_apiKey.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Groq API key is missing. Please add it to your .env file.',
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Groq API key is missing. Please add it to your .env file.',
+            ),
           ),
-        ),
-      );
+        );
+      }
       return;
     }
 
@@ -61,30 +71,45 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       'Content-Type': 'application/json',
     };
 
-    final prompt =
-        'Take this transcription and generate a 5-line paragraph about this artist for their Instagram, with 5 relevant hashtags. '
-        'Transcription: "$transcription"';
-
     final body = jsonEncode({
-      "messages": [
-        {"role": "user", "content": prompt},
-      ],
       "model": "llama3-8b-8192",
+      "messages": [
+        {
+          "role": "system",
+          "content":
+              "You are a helpful assistant that analyzes a given text to extract specific information. The user will provide a text transcription. Your task is to return a JSON object with the following structure: {\"title\": \"<A suitable title for the post>\", \"location\": \"<The location mentioned, or 'Unknown' if not specified>\", \"hashtags\": [\"#hashtag1\", \"#hashtag2\"], \"content\": \"<The original transcribed text>\"}. Ensure the hashtags are relevant to the content and the content is the same as the transcription.",
+        },
+        {"role": "user", "content": transcription},
+      ],
+      "temperature": 0.7,
+      "response_format": {"type": "json_object"},
     });
 
     try {
       final response = await http.post(url, headers: headers, body: body);
-      if (response.statusCode == 200) {
-        final responseBody = jsonDecode(response.body);
-        final generatedPost = responseBody['choices'][0]['message']['content'];
-        widget.onGenerationComplete(generatedPost);
-      } else {
-        print('API Error: ${response.body}');
-        widget.onGenerationComplete("Error: Could not generate post.");
+      if (mounted) {
+        if (response.statusCode == 200) {
+          final responseBody = jsonDecode(response.body);
+          final contentJson = responseBody['choices'][0]['message']['content'];
+          final extractedData = jsonDecode(contentJson);
+
+          widget.onGenerationComplete(
+            extractedData['content'] ?? transcription,
+            extractedData['title'] ?? 'Untitled',
+            extractedData['location'] ?? 'Unknown',
+            List<String>.from(extractedData['hashtags'] ?? []),
+          );
+        } else {
+          print('API Error: ${response.body}');
+          // Fallback with just the transcription
+          widget.onGenerationComplete(transcription, 'Untitled', 'Unknown', []);
+        }
       }
     } catch (e) {
       print('Network Error: $e');
-      widget.onGenerationComplete("Error: Network issue.");
+      if (mounted) {
+        widget.onGenerationComplete(transcription, 'Untitled', 'Unknown', []);
+      }
     }
   }
 

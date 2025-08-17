@@ -11,8 +11,11 @@ class PostService {
   );
 
   Future<void> createPost({
+    required String title,
     required String content,
     required String userId,
+    String? location,
+    List<String>? hashtags,
     File? imageFile,
     XFile? webImageFile,
   }) async {
@@ -33,9 +36,12 @@ class PostService {
 
     final newPost = Post(
       id: '', // Firestore will generate this
+      title: title,
       content: content,
       userId: userId,
       imageUrl: imageUrl,
+      location: location ?? 'Default Location',
+      hashtags: hashtags ?? [],
       timestamp: DateTime.now(),
       likes: [],
       commentsCount: 0,

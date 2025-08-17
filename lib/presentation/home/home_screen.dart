@@ -36,132 +36,127 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          // Blur effect when sidebar is extended
-          if (_isRailExtended)
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                child: Container(color: Colors.black.withOpacity(0.2)),
-              ),
-            ),
-
-          // Main content area
-          AnimatedPadding(
-            duration: const Duration(milliseconds: 250),
-            padding: EdgeInsets.only(left: _isRailExtended ? 250 : 70),
+          // Main content area, always padded for the retracted rail
+          Padding(
+            padding: const EdgeInsets.only(left: 70),
             child: Center(child: _widgetOptions.elementAt(_selectedIndex)),
           ),
 
-          // Sidebar
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            top: 0,
-            bottom: 0,
-            left: 0,
-            width: _isRailExtended ? 250 : 70,
-            child: MouseRegion(
-              onEnter: (_) => setState(() => _isRailExtended = true),
-              onExit: (_) => setState(() => _isRailExtended = false),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 0, 41, 36),
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(20),
-                    bottomRight: Radius.circular(20),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(5, 0),
-                    ),
-                  ],
+          // Blur effect when sidebar is extended
+          if (_isRailExtended)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => setState(() => _isRailExtended = false),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                  child: Container(color: Colors.black.withOpacity(0.2)),
                 ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 40),
-                    // Logo
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.palette,
-                            color: Colors.white,
-                            size: 32,
-                          ),
-                          if (_isRailExtended)
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 12),
-                                child: Text(
-                                  'VocalCanvas',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+          // Sidebar
+          MouseRegion(
+            onEnter: (_) => setState(() => _isRailExtended = true),
+            onExit: (_) => setState(() => _isRailExtended = false),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: _isRailExtended ? 250 : 70,
+              decoration: BoxDecoration(
+                color: const Color.fromARGB(255, 0, 41, 36),
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(5, 0),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  // Logo
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.palette,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        if (_isRailExtended)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 12),
+                              child: Text(
+                                'VocalCanvas',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 40),
-
-                    // Navigation Items
-                    Expanded(
-                      child: ListView(
-                        children: [
-                          _buildNavItem(
-                            icon: Icons.home,
-                            label: 'Home',
-                            index: 0,
-                            isSelected: _selectedIndex == 0,
-                            isRailExtended: _isRailExtended,
-                          ),
-                          _buildNavItem(
-                            icon: Icons.explore,
-                            label: 'Explore',
-                            index: 1,
-                            isSelected: _selectedIndex == 1,
-                            isRailExtended: _isRailExtended,
-                          ),
-                          _buildNavItem(
-                            icon: Icons.search,
-                            label: 'Search',
-                            index: 2,
-                            isSelected: _selectedIndex == 2,
-                            isRailExtended: _isRailExtended,
-                          ),
-                          _buildNavItem(
-                            icon: Icons.museum,
-                            label: 'Exhibition',
-                            index: 3,
-                            isSelected: _selectedIndex == 3,
-                            isRailExtended: _isRailExtended,
-                          ),
-                          _buildNavItem(
-                            icon: Icons.person,
-                            label: 'Profile',
-                            index: 4,
-                            isSelected: _selectedIndex == 4,
-                            isRailExtended: _isRailExtended,
-                          ),
-                          _buildNavItem(
-                            icon: Icons.settings,
-                            label: 'Settings',
-                            index: 5,
-                            isSelected: _selectedIndex == 5,
-                            isRailExtended: _isRailExtended,
-                          ),
-                        ],
-                      ),
+                  ),
+                  const SizedBox(height: 40),
+                  // Navigation Items
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        _buildNavItem(
+                          icon: Icons.home,
+                          label: 'Home',
+                          index: 0,
+                          isSelected: _selectedIndex == 0,
+                          isRailExtended: _isRailExtended,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.explore,
+                          label: 'Explore',
+                          index: 1,
+                          isSelected: _selectedIndex == 1,
+                          isRailExtended: _isRailExtended,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.search,
+                          label: 'Search',
+                          index: 2,
+                          isSelected: _selectedIndex == 2,
+                          isRailExtended: _isRailExtended,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.museum,
+                          label: 'Exhibition',
+                          index: 3,
+                          isSelected: _selectedIndex == 3,
+                          isRailExtended: _isRailExtended,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.person,
+                          label: 'Profile',
+                          index: 4,
+                          isSelected: _selectedIndex == 4,
+                          isRailExtended: _isRailExtended,
+                        ),
+                        _buildNavItem(
+                          icon: Icons.settings,
+                          label: 'Settings',
+                          index: 5,
+                          isSelected: _selectedIndex == 5,
+                          isRailExtended: _isRailExtended,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -210,20 +205,24 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
         },
         child: Container(
           padding: EdgeInsets.symmetric(
-            horizontal: isRailExtended ? 16 : 8,
+            horizontal: isRailExtended ? 16 : 22, // Adjusted padding
             vertical: 12,
           ),
           child: Row(
+            mainAxisAlignment:
+                isRailExtended
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
                 color:
                     isSelected ? Colors.white : Colors.white.withOpacity(0.7),
-                size: 20,
+                size: 24,
               ),
               if (isRailExtended) ...[
                 const SizedBox(width: 12),
-                Flexible(
+                Expanded(
                   child: Text(
                     label,
                     style: TextStyle(
@@ -233,7 +232,7 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                               : Colors.white.withOpacity(0.7),
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w400,
-                      fontSize: 14,
+                      fontSize: 16,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -262,14 +261,13 @@ class Desktop1 extends StatelessWidget {
         children: [
           // Tree image in top-right corner for aesthetics
           Positioned(
-            top: 20,
-            right: 20,
+            top: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
               width: 150,
-              height: 150,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.0),
-                image: const DecorationImage(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
                   image: AssetImage("assets/tree.png"),
                   fit: BoxFit.cover,
                 ),
@@ -277,7 +275,7 @@ class Desktop1 extends StatelessWidget {
             ),
           ),
           // Welcome text
-          Positioned(
+          const Positioned(
             left: 60,
             top: 60,
             child: Text(
@@ -295,7 +293,7 @@ class Desktop1 extends StatelessWidget {
           Positioned(
             left: 60,
             top: 150,
-            right: 60,
+            right: 210, // Adjusted to create space for the tree image
             bottom: 60,
             child: StreamBuilder<List<Post>>(
               stream: _postService.getPostsStream(),
@@ -381,17 +379,36 @@ class Desktop1 extends StatelessWidget {
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: 24,
                         mainAxisSpacing: 24,
-                        childAspectRatio: 1.2,
+                        childAspectRatio: 0.9, // Adjusted aspect ratio
                       ),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
                         final post = snapshot.data![index];
                         return InkWell(
                           onTap: () {
-                            // TODO: Implement detail view
+                            Navigator.of(context).push(
+                              PageRouteBuilder(
+                                opaque:
+                                    false, // Important for transparent background
+                                pageBuilder: (BuildContext context, _, __) {
+                                  return PostDetailView(post: post);
+                                },
+                                transitionsBuilder: (
+                                  ___,
+                                  Animation<double> animation,
+                                  ____,
+                                  Widget child,
+                                ) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
+                              ),
+                            );
                           },
                           child: Container(
-                            padding: const EdgeInsets.all(24.0),
+                            padding: const EdgeInsets.all(12.0),
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 0, 41, 36),
                               borderRadius: BorderRadius.circular(12.0),
@@ -407,84 +424,77 @@ class Desktop1 extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (post.imageUrl != null)
-                                  Flexible(
+                                  Expanded(
+                                    flex: 3,
                                     child: Container(
                                       width: double.infinity,
-                                      height: 120,
-                                      margin: const EdgeInsets.only(bottom: 12),
+                                      margin: const EdgeInsets.only(bottom: 8),
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(
                                           8.0,
                                         ),
-                                        child:
-                                            post.imageUrl!.startsWith('data:')
-                                                ? Image.network(
-                                                  post.imageUrl!,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) {
-                                                    return Container(
-                                                      color: Colors.grey
-                                                          .withOpacity(0.3),
-                                                      child: const Icon(
-                                                        Icons
-                                                            .image_not_supported,
-                                                      ),
-                                                    );
-                                                  },
-                                                )
-                                                : Image.network(
-                                                  post.imageUrl!,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) {
-                                                    return Container(
-                                                      color: Colors.grey
-                                                          .withOpacity(0.3),
-                                                      child: const Icon(
-                                                        Icons
-                                                            .image_not_supported,
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
+                                        child: Image.network(
+                                          post.imageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            return Container(
+                                              color: Colors.grey.withOpacity(
+                                                0.3,
+                                              ),
+                                              child: const Icon(
+                                                Icons.image_not_supported,
+                                              ),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ),
                                   ),
-                                const SizedBox(height: 16),
                                 Text(
-                                  post.content, // Using content as title for now
+                                  post.title,
                                   style: const TextStyle(
-                                    fontSize: 20,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                     fontFamily: 'Lora',
                                   ),
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 4),
                                 Text(
                                   'By: ${post.userId}',
                                   style: const TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 12,
                                     color: Colors.white70,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Posted: ${post.timestamp.toLocal().toString().split(".")[0]}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white38,
-                                  ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.location_on,
+                                      color: Colors.white70,
+                                      size: 12,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        post.location ?? 'No location',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.white70,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                const Spacer(),
                               ],
                             ),
                           ),
@@ -497,6 +507,111 @@ class Desktop1 extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class PostDetailView extends StatelessWidget {
+  final Post post;
+
+  const PostDetailView({super.key, required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent, // Important for blur effect
+      body: GestureDetector(
+        onTap: () => Navigator.of(context).pop(),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Center(
+            child: GestureDetector(
+              onTap: () {}, // To prevent pop on card tap
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.6,
+                  maxHeight: MediaQuery.of(context).size.height * 0.85,
+                ),
+                child: Card(
+                  elevation: 20,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (post.imageUrl != null)
+                          Center(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12.0),
+                              child: Image.network(post.imageUrl!),
+                            ),
+                          ),
+                        const SizedBox(height: 24),
+                        Text(
+                          post.title,
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.person,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'By ${post.userId}',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(width: 16),
+                            const Icon(
+                              Icons.location_on,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              post.location ?? 'No location',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 32),
+                        Text(
+                          post.content,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(fontSize: 16, height: 1.5),
+                        ),
+                        const SizedBox(height: 24),
+                        if (post.hashtags.isNotEmpty)
+                          Wrap(
+                            spacing: 8.0,
+                            runSpacing: 4.0,
+                            children:
+                                post.hashtags
+                                    .map(
+                                      (tag) => Chip(
+                                        label: Text('#$tag'),
+                                        backgroundColor: Colors.grey.shade200,
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
