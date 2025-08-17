@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'widgets/voice_recorder_widget.dart'; // Import the voice recorder widget
+import '../../core/services/post_service.dart';
 
 class CreateScreen extends StatefulWidget {
   const CreateScreen({super.key});
@@ -9,8 +14,46 @@ class CreateScreen extends StatefulWidget {
 }
 
 class _CreateScreenState extends State<CreateScreen> {
-  // New state variable to hold the AI-generated post.
   String? _generatedPost;
+  File? _imageFile;
+  XFile? _webImageFile;
+  Uint8List? _webImageBytes;
+  final PostService _postService = PostService();
+
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        if (kIsWeb) {
+          _webImageFile = pickedFile;
+          // Load the image bytes for web display
+          pickedFile.readAsBytes().then((bytes) {
+            setState(() {
+              _webImageBytes = bytes;
+            });
+          });
+        } else {
+          _imageFile = File(pickedFile.path);
+        }
+      });
+    }
+  }
+
+  void _createPost() {
+    if (_generatedPost != null) {
+      // In a real app, you would get the actual user ID.
+      _postService.createPost(
+        content: _generatedPost!,
+        userId: 'current_user',
+        imageFile: _imageFile,
+        webImageFile: _webImageFile,
+      );
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,40 +89,25 @@ class _CreateScreenState extends State<CreateScreen> {
                       ),
                       const SizedBox(height: 60),
                       VoiceRecorderWidget(
-                        // This function receives the generated text from the widget.
-                        onGenerationComplete: (generatedText) {
+                        onGenerationComplete: (String text) {
                           setState(() {
-                            _generatedPost = generatedText;
+                            _generatedPost = text;
                           });
                         },
                       ),
                     ] else ...[
-                      // Display the generated post in a new card.
-                      const SizedBox(height: 40),
+                      // Show generated text and image upload
                       GeneratedPostCard(
-                        postText: _generatedPost!,
-                        onRetry: () {
-                          setState(() {
-                            _generatedPost = null;
-                          });
-                        },
+                        generatedText: _generatedPost!,
+                        imageFile: _imageFile,
+                        webImageBytes: _webImageBytes,
+                        onPickImage: _pickImage,
+                        onCreatePost: _createPost,
                       ),
                     ],
                   ],
                 ),
               ),
-            ),
-          ),
-          // Floating back button
-          Positioned(
-            top: 40,
-            left: 40,
-            child: FloatingActionButton(
-              onPressed: () => Navigator.of(context).pop(),
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
-              elevation: 4,
-              child: const Icon(Icons.arrow_back),
             ),
           ),
         ],
@@ -88,24 +116,29 @@ class _CreateScreenState extends State<CreateScreen> {
   }
 }
 
-// A new widget to display the AI-generated post.
 class GeneratedPostCard extends StatelessWidget {
-  final String postText;
-  final VoidCallback onRetry;
+  final String generatedText;
+  final File? imageFile;
+  final Uint8List? webImageBytes;
+  final VoidCallback onPickImage;
+  final VoidCallback onCreatePost;
 
   const GeneratedPostCard({
     super.key,
-    required this.postText,
-    required this.onRetry,
+    required this.generatedText,
+    this.imageFile,
+    this.webImageBytes,
+    required this.onPickImage,
+    required this.onCreatePost,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -115,51 +148,57 @@ class GeneratedPostCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Your Generated Post',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Lora',
-              color: Colors.black,
-            ),
-          ),
-          const Divider(height: 30),
           Text(
-            postText,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.black87,
-              height: 1.5,
+            generatedText,
+            style: const TextStyle(fontSize: 18, fontFamily: 'Lora'),
+          ),
+          const SizedBox(height: 24),
+          if (imageFile != null || webImageBytes != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child:
+                  kIsWeb && webImageBytes != null
+                      ? Image.memory(
+                        webImageBytes!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                      : imageFile != null
+                      ? Image.file(
+                        imageFile!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                      : Container(),
+            ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onPickImage,
+            icon: const Icon(Icons.image),
+            label: const Text('Upload Image'),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color.fromARGB(255, 0, 41, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              textStyle: const TextStyle(fontSize: 16),
             ),
           ),
-          const SizedBox(height: 30),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color.fromARGB(255, 0, 41, 36),
-                ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: onCreatePost,
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.green.shade800,
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+              textStyle: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(width: 10),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Implement copy to clipboard or post to social media.
-                },
-                icon: const Icon(Icons.copy),
-                label: const Text('Copy & Use'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 0, 41, 36),
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
+            ),
+            child: const Text('Create Post'),
           ),
         ],
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import '../../core/services/post_service.dart';
+import '../../data/models/post.dart';
 
 // Data model for each item in our grid. In a real app, this would be in its own file.
 class ArtworkItem {
@@ -16,20 +18,52 @@ class ArtworkItem {
 
 // List of all the content to display. This is placeholder data.
 final List<ArtworkItem> items = [
-  ArtworkItem(imagePath: 'assets/Mosaic_Art.jpeg', title: 'Cosmic Shards', artist: 'Priya Sharma'),
-  ArtworkItem(imagePath: 'assets/Glass.jpg', title: 'Molten Light', artist: 'Rohan Mehta'),
-  ArtworkItem(imagePath: 'assets/Wooden_Toys.jpeg', title: 'Forest Friends', artist: 'Anjali Verma'),
-  ArtworkItem(imagePath: 'assets/Ceramic.jpg', title: 'Earthly Bowls', artist: 'Vikram Singh'),
+  ArtworkItem(
+    imagePath: 'assets/Mosaic_Art.jpeg',
+    title: 'Cosmic Shards',
+    artist: 'Priya Sharma',
+  ),
+  ArtworkItem(
+    imagePath: 'assets/Glass.jpg',
+    title: 'Molten Light',
+    artist: 'Rohan Mehta',
+  ),
+  ArtworkItem(
+    imagePath: 'assets/Wooden_Toys.jpeg',
+    title: 'Forest Friends',
+    artist: 'Anjali Verma',
+  ),
+  ArtworkItem(
+    imagePath: 'assets/Ceramic.jpg',
+    title: 'Earthly Bowls',
+    artist: 'Vikram Singh',
+  ),
   // Add more items to see the grid grow
-  ArtworkItem(imagePath: 'assets/Mosaic_Art.jpeg', title: 'Galaxy in Blue', artist: 'Priya Sharma'),
-  ArtworkItem(imagePath: 'assets/Ceramic.jpg', title: 'Glazed Dreams', artist: 'Vikram Singh'),
-  ArtworkItem(imagePath: 'assets/Glass.jpg', title: 'Sun Catcher', artist: 'Rohan Mehta'),
-  ArtworkItem(imagePath: 'assets/Wooden_Toys.jpeg', title: 'Playful Shapes', artist: 'Anjali Verma'),
+  ArtworkItem(
+    imagePath: 'assets/Mosaic_Art.jpeg',
+    title: 'Galaxy in Blue',
+    artist: 'Priya Sharma',
+  ),
+  ArtworkItem(
+    imagePath: 'assets/Ceramic.jpg',
+    title: 'Glazed Dreams',
+    artist: 'Vikram Singh',
+  ),
+  ArtworkItem(
+    imagePath: 'assets/Glass.jpg',
+    title: 'Sun Catcher',
+    artist: 'Rohan Mehta',
+  ),
+  ArtworkItem(
+    imagePath: 'assets/Wooden_Toys.jpeg',
+    title: 'Playful Shapes',
+    artist: 'Anjali Verma',
+  ),
 ];
 
-
 class ExploreScreen extends StatelessWidget {
-  const ExploreScreen({super.key});
+  final PostService _postService = PostService();
+  ExploreScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +71,6 @@ class ExploreScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         int crossAxisCount;
-        // Determine the number of columns based on the available width.
         if (constraints.maxWidth > 1200) {
           crossAxisCount = 5;
         } else if (constraints.maxWidth > 800) {
@@ -48,28 +81,104 @@ class ExploreScreen extends StatelessWidget {
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: StaggeredGrid.count(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            // We map our data list to a list of ArtworkCard widgets.
-            children: items.asMap().entries.map((entry) {
-              int index = entry.key;
-              ArtworkItem item = entry.value;
-              // Create different tile sizes for a dynamic look
-              return StaggeredGridTile.count(
-                crossAxisCellCount: (index % 5 == 0 || index % 5 == 3) ? 2 : 1,
-                mainAxisCellCount: (index % 5 == 0 || index % 5 == 3) ? 2 : 1.5,
-                child: ArtworkCard(item: item),
-              );
-            }).toList(),
+          child: Column(
+            children: [
+              StaggeredGrid.count(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                children:
+                    items.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      ArtworkItem item = entry.value;
+                      return StaggeredGridTile.count(
+                        crossAxisCellCount:
+                            (index % 5 == 0 || index % 5 == 3) ? 2 : 1,
+                        mainAxisCellCount:
+                            (index % 5 == 0 || index % 5 == 3) ? 2 : 1.5,
+                        child: ArtworkCard(item: item),
+                      );
+                    }).toList(),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                height: 250,
+                child: StreamBuilder<List<Post>>(
+                  stream: _postService.getPostsStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No posts yet.',
+                          style: TextStyle(color: Colors.black, fontSize: 24),
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: snapshot.data!.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 24),
+                      itemBuilder: (context, index) {
+                        final post = snapshot.data![index];
+                        return Container(
+                          width: 400,
+                          padding: const EdgeInsets.all(24.0),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 0, 41, 36),
+                            borderRadius: BorderRadius.circular(12.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                post.content,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.white,
+                                  fontFamily: 'Lora',
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'By: ${post.userId}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Posted: ${post.timestamp.toLocal().toString().split(".")[0]}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white38,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         );
       },
     );
   }
 }
-
 
 // A reusable card widget for displaying each art piece.
 // In a real app, this would be in 'lib/presentation/widgets/artwork_card.dart'.
@@ -82,18 +191,13 @@ class ArtworkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
       child: Stack(
         fit: StackFit.expand,
         children: [
           // Background Image
-          Image.asset(
-            item.imagePath,
-            fit: BoxFit.cover,
-          ),
-          
+          Image.asset(item.imagePath, fit: BoxFit.cover),
+
           // Gradient overlay for better text readability at the bottom.
           Container(
             decoration: BoxDecoration(

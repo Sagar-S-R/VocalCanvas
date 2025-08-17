@@ -201,47 +201,35 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
         color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
+          size: 24,
+        ),
+        title:
+            isRailExtended
+                ? Text(
+                  label,
+                  style: TextStyle(
+                    color:
+                        isSelected
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.7),
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                )
+                : null,
         onTap: () {
           setState(() {
             _selectedIndex = index;
           });
         },
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isRailExtended ? 16 : 8,
-            vertical: 12,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color:
-                    isSelected ? Colors.white : Colors.white.withOpacity(0.7),
-                size: 20,
-              ),
-              if (isRailExtended) ...[
-                const SizedBox(width: 12),
-                Flexible(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color:
-                          isSelected
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.7),
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
-                      fontSize: 14,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ],
-          ),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isRailExtended ? 16 : 24,
+          vertical: 8,
         ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -407,53 +395,13 @@ class Desktop1 extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 if (post.imageUrl != null)
-                                  Flexible(
-                                    child: Container(
-                                      width: double.infinity,
-                                      height: 120,
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(
-                                          8.0,
-                                        ),
-                                        child:
-                                            post.imageUrl!.startsWith('data:')
-                                                ? Image.network(
-                                                  post.imageUrl!,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) {
-                                                    return Container(
-                                                      color: Colors.grey
-                                                          .withOpacity(0.3),
-                                                      child: const Icon(
-                                                        Icons
-                                                            .image_not_supported,
-                                                      ),
-                                                    );
-                                                  },
-                                                )
-                                                : Image.network(
-                                                  post.imageUrl!,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) {
-                                                    return Container(
-                                                      color: Colors.grey
-                                                          .withOpacity(0.3),
-                                                      child: const Icon(
-                                                        Icons
-                                                            .image_not_supported,
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.network(
+                                        post.imageUrl!,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
                                       ),
                                     ),
                                   ),

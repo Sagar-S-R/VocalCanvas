@@ -29,7 +29,6 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
     super.initState();
     _initSpeechToText();
 
-    
     _apiKey = dotenv.env['GROQ_API_KEY'] ?? '';
   }
 
@@ -40,6 +39,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
   @override
   void dispose() {
     _audioRecorder.dispose();
+    _speechToText.cancel();
     super.dispose();
   }
 
@@ -94,16 +94,20 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         await _audioRecorder.stop();
         await _speechToText.stop();
 
-        setState(() {
-          _isRecording = false;
-          _isGenerating = true;
-        });
+        if (mounted) {
+          setState(() {
+            _isRecording = false;
+            _isGenerating = true;
+          });
+        }
 
         await _generatePostWithGroq(_transcribedText);
 
-        setState(() {
-          _isGenerating = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isGenerating = false;
+          });
+        }
       } else {
         await _audioRecorder.start(
           const RecordConfig(),
@@ -111,14 +115,18 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         );
         _speechToText.listen(
           onResult: (result) {
-            setState(() {
-              _transcribedText = result.recognizedWords;
-            });
+            if (mounted) {
+              setState(() {
+                _transcribedText = result.recognizedWords;
+              });
+            }
           },
         );
-        setState(() {
-          _isRecording = true;
-        });
+        if (mounted) {
+          setState(() {
+            _isRecording = true;
+          });
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -150,13 +158,14 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
               ],
             ),
             child: Center(
-              child: _isGenerating
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Icon(
-                      _isRecording ? Icons.stop : Icons.mic,
-                      color: Colors.white,
-                      size: 80,
-                    ),
+              child:
+                  _isGenerating
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Icon(
+                        _isRecording ? Icons.stop : Icons.mic,
+                        color: Colors.white,
+                        size: 80,
+                      ),
             ),
           ),
         ),
