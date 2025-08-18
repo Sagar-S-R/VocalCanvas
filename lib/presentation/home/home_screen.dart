@@ -8,6 +8,7 @@ import '../settings/settings_screen.dart';
 import '../../core/services/post_service.dart';
 import '../../data/models/post.dart';
 
+
 // This is the main page widget that includes the sidebar.
 class VocalCanvasHomePage extends StatefulWidget {
   const VocalCanvasHomePage({super.key});
@@ -183,6 +184,7 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
     );
   }
 
+  // DEFINITIVELY FIXED NAVIGATION ITEM WIDGET
   Widget _buildNavItem({
     required IconData icon,
     required String label,
@@ -196,60 +198,63 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
         color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(
+      // Using ClipRRect to ensure the InkWell splash honors the rounded corners
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            // ** एकमात्र बदलाव यहाँ है **
-            // The only change is here to fix the overflow
-            horizontal: isRailExtended ? 16 : 15, // Adjusted padding
-            vertical: 12,
-          ),
-          child: Row(
-            mainAxisAlignment:
-                isRailExtended
-                    ? MainAxisAlignment.start
-                    : MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color:
-                    isSelected ? Colors.white : Colors.white.withOpacity(0.7),
-                size: 24,
-              ),
-              if (isRailExtended) ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color:
-                          isSelected
-                              ? Colors.white
-                              : Colors.white.withOpacity(0.7),
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
-                      fontSize: 16,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          child: SizedBox(
+            height: 56,
+            child: isRailExtended
+                // **Use a Row ONLY when expanded**
+                ? Row(
+                    children: <Widget>[
+                      const SizedBox(width: 16), // Left padding
+                      Icon(
+                        icon,
+                        color: isSelected
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.7),
+                        size: 24,
+                      ),
+                      const SizedBox(width: 12), // Space between icon and text
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.7),
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.w400,
+                            fontSize: 16,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  )
+                // **Use a simple Center when collapsed**
+                // This is robust and has no complex padding math to cause overflows.
+                : Center(
+                    child: Icon(
+                      icon,
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.7),
+                      size: 24,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ],
           ),
         ),
       ),
     );
   }
 }
-
-// NOTE: The Desktop1 and PostDetailView classes are assumed to be correct and are included for completeness.
-
 class Desktop1 extends StatelessWidget {
   final PostService _postService = PostService();
 
