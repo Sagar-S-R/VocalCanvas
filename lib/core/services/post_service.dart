@@ -60,6 +60,13 @@ class PostService {
         );
   }
 
+  Future<List<Post>> getAllPosts() async {
+    final querySnapshot =
+        await postsRef.orderBy('timestamp', descending: true).get();
+
+    return querySnapshot.docs.map((doc) => Post.fromFirestore(doc)).toList();
+  }
+
   Future<void> updatePost(String postId, Map<String, dynamic> data) async {
     await postsRef.doc(postId).update(data);
   }

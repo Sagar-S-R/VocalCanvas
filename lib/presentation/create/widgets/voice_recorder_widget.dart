@@ -11,6 +11,7 @@ class VoiceRecorderWidget extends StatefulWidget {
     String title,
     String location,
     List<String> hashtags,
+    String caption,
   )
   onGenerationComplete;
 
@@ -77,11 +78,11 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         {
           "role": "system",
           "content":
-              "You are a helpful assistant that analyzes a given text to extract specific information. The user will provide a text transcription. Your task is to return a JSON object with the following structure: {\"title\": \"<A suitable title for the post>\", \"location\": \"<The location mentioned, or 'Unknown' if not specified>\", \"hashtags\": [\"#hashtag1\", \"#hashtag2\"], \"content\": \"<The original transcribed text>\"}. Ensure the hashtags are relevant to the content and the content is the same as the transcription.",
+              "You are an AI assistant that creates art posts from voice descriptions. Analyze the transcription and create a beautiful art post. Return a JSON object with: {\"title\": \"<1-2 words catchy title like 'Mosaic Art', 'Digital Dreams', etc.>\", \"location\": \"<inferred or mentioned location, or 'Unknown'>\", \"hashtags\": [\"#art\", \"#creative\", \"#inspiration\"], \"content\": \"<A poetic 3-4 sentence description about the artwork that captures emotion and story. Make it inspiring and artistic, like describing a beautiful art piece.>\", \"caption\": \"<A short inspirational quote or caption about art/creativity>\"}. Focus on making content that sounds like describing a beautiful artwork or creative piece.",
         },
         {"role": "user", "content": transcription},
       ],
-      "temperature": 0.7,
+      "temperature": 0.8,
       "response_format": {"type": "json_object"},
     });
 
@@ -98,17 +99,30 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
             extractedData['title'] ?? 'Untitled',
             extractedData['location'] ?? 'Unknown',
             List<String>.from(extractedData['hashtags'] ?? []),
+            extractedData['caption'] ?? 'Every piece tells a story',
           );
         } else {
           print('API Error: ${response.body}');
           // Fallback with just the transcription
-          widget.onGenerationComplete(transcription, 'Untitled', 'Unknown', []);
+          widget.onGenerationComplete(
+            transcription,
+            'Untitled',
+            'Unknown',
+            [],
+            'Every piece tells a story',
+          );
         }
       }
     } catch (e) {
       print('Network Error: $e');
       if (mounted) {
-        widget.onGenerationComplete(transcription, 'Untitled', 'Unknown', []);
+        widget.onGenerationComplete(
+          transcription,
+          'Untitled',
+          'Unknown',
+          [],
+          'Every piece tells a story',
+        );
       }
     }
   }

@@ -38,7 +38,26 @@ class VocalCanvasApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'VocalCanvas',
-      theme: ThemeData.dark().copyWith(canvasColor: const Color(0xFFF0EBE3)),
+      theme: ThemeData(
+        primarySwatch: Colors.teal,
+        primaryColor: const Color.fromARGB(255, 0, 41, 36),
+        scaffoldBackgroundColor: const Color(0xFFF0EBE3),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFFF0EBE3),
+          foregroundColor: Color.fromARGB(255, 0, 41, 36),
+          elevation: 0,
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color.fromARGB(255, 0, 41, 36),
+          foregroundColor: Colors.white,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 0, 41, 36),
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ),
       home: const VocalCanvasHomePage(),
       debugShowCheckedModeBanner: false,
     );

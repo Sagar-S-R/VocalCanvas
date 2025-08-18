@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -18,6 +17,7 @@ class _CreateScreenState extends State<CreateScreen> {
   String _content = '';
   String _title = '';
   String _location = '';
+  String _caption = '';
   List<String> _hashtags = [];
   dynamic _image; // Can be File or XFile
   bool _isUploading = false;
@@ -28,6 +28,7 @@ class _CreateScreenState extends State<CreateScreen> {
     String title,
     String location,
     List<String> hashtags,
+    String caption,
   ) {
     if (mounted) {
       setState(() {
@@ -35,6 +36,7 @@ class _CreateScreenState extends State<CreateScreen> {
         _title = title;
         _location = location;
         _hashtags = hashtags;
+        _caption = caption;
         _isGenerating = false; // Generation is complete
       });
     }
@@ -120,11 +122,23 @@ class _CreateScreenState extends State<CreateScreen> {
               children: [
                 if (_content.isEmpty)
                   VoiceRecorderWidget(
-                    onGenerationComplete: (content, title, location, hashtags) {
+                    onGenerationComplete: (
+                      content,
+                      title,
+                      location,
+                      hashtags,
+                      caption,
+                    ) {
                       setState(() {
                         _isGenerating = true;
                       });
-                      _onGenerationComplete(content, title, location, hashtags);
+                      _onGenerationComplete(
+                        content,
+                        title,
+                        location,
+                        hashtags,
+                        caption,
+                      );
                     },
                   )
                 else
@@ -144,111 +158,336 @@ class _CreateScreenState extends State<CreateScreen> {
 
                 if (_content.isNotEmpty && !_isGenerating)
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    height: 400,
+                    margin: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: Colors.black.withOpacity(0.3),
                           spreadRadius: 2,
-                          blurRadius: 5,
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _title,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Stack(
+                        children: [
+                          // Background - either image or gradient
+                          Positioned.fill(
+                            child:
+                                _image != null
+                                    ? (kIsWeb
+                                        ? Image.network(
+                                          _image.path,
+                                          fit: BoxFit.cover,
+                                        )
+                                        : Image.file(
+                                          _image as File,
+                                          fit: BoxFit.cover,
+                                        ))
+                                    : Container(
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Color(0xFF1A237E),
+                                            Color(0xFF3949AB),
+                                            Color(0xFF5C6BC0),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(_content),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.location_on,
-                              size: 16,
-                              color: Colors.grey,
+
+                          // Dark Overlay
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withOpacity(0.3),
+                                    Colors.black.withOpacity(0.7),
+                                  ],
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 4),
-                            Text(_location),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6.0,
-                          runSpacing: 6.0,
-                          children:
-                              _hashtags
-                                  .map((tag) => Chip(label: Text(tag)))
-                                  .toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 32),
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[400]!),
-                    ),
-                    child:
-                        _image == null
-                            ? const Center(
+                          ),
+
+                          // Content
+                          Positioned.fill(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.add_a_photo,
-                                    size: 50,
-                                    color: Colors.grey,
+                                  // Location chip
+                                  if (_location.isNotEmpty &&
+                                      _location != 'Unknown')
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.white.withOpacity(0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        _location,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+
+                                  const Spacer(),
+
+                                  // Caption/Description
+                                  if (_caption.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 10,
+                                      ),
+                                      child: Text(
+                                        _caption,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          height: 1.4,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+
+                                  const SizedBox(height: 10),
+
+                                  // Title
+                                  Text(
+                                    _title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.1,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  SizedBox(height: 8),
-                                  Text('Tap to add an image'),
+
+                                  const SizedBox(height: 10),
+
+                                  // Hashtags
+                                  if (_hashtags.isNotEmpty)
+                                    Wrap(
+                                      spacing: 8,
+                                      children:
+                                          _hashtags.take(3).map((tag) {
+                                            return Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(
+                                                  0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                tag,
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                    ),
                                 ],
                               ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                // Image picker - only show if content is generated and no image selected
+                if (_content.isNotEmpty && _image == null)
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 16),
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        height: 120,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: const Color.fromARGB(
+                            255,
+                            0,
+                            41,
+                            36,
+                          ).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color.fromARGB(
+                              255,
+                              0,
+                              41,
+                              36,
+                            ).withOpacity(0.3),
+                            width: 2,
+                            style: BorderStyle.solid,
+                          ),
+                        ),
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add_photo_alternate,
+                                size: 40,
+                                color: Color.fromARGB(255, 0, 41, 36),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Tap to add your artwork image',
+                                style: TextStyle(
+                                  color: Color.fromARGB(255, 0, 41, 36),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                'The image will enhance your art post',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // Change image button if image is selected
+                if (_content.isNotEmpty && _image != null)
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Change Image'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color.fromARGB(
+                              255,
+                              0,
+                              41,
+                              36,
+                            ),
+                            side: const BorderSide(
+                              color: Color.fromARGB(255, 0, 41, 36),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _image = null;
+                            });
+                          },
+                          icon: const Icon(Icons.delete),
+                          label: const Text('Remove Image'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade50,
+                            foregroundColor: Colors.red.shade700,
+                            side: BorderSide(
+                              color: Colors.red.shade300,
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 40),
+
+                // Create Post Button
+                if (_content.isNotEmpty)
+                  SizedBox(
+                    width: double.infinity,
+                    child:
+                        _isUploading
+                            ? Container(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: const Center(
+                                child: Column(
+                                  children: [
+                                    CircularProgressIndicator(
+                                      color: Color.fromARGB(255, 0, 41, 36),
+                                    ),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      'Creating your masterpiece...',
+                                      style: TextStyle(
+                                        color: Color.fromARGB(255, 0, 41, 36),
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             )
-                            : ClipRRect(
-                              borderRadius: BorderRadius.circular(11),
-                              child:
-                                  (kIsWeb
-                                      ? Image.network(
-                                        _image.path,
-                                        fit: BoxFit.cover,
-                                      )
-                                      : Image.file(
-                                        _image as File,
-                                        fit: BoxFit.cover,
-                                      )),
+                            : ElevatedButton(
+                              onPressed: _createPost,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  0,
+                                  41,
+                                  36,
+                                ),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                              ),
+                              child: const Text(
+                                'Share Your Art Story',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                _isUploading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                      onPressed: _createPost,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 0, 41, 36),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 50,
-                          vertical: 15,
-                        ),
-                        textStyle: const TextStyle(fontSize: 18),
-                      ),
-                      child: const Text('Create Post'),
-                    ),
               ],
             ),
           ),
