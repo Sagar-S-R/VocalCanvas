@@ -1,138 +1,134 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
-// Data model for each item in our grid. In a real app, this would be in its own file.
-class ArtworkItem {
-  final String imagePath;
-  final String title;
-  final String artist;
+import '../../core/services/post_service.dart';
+import '../../data/models/post.dart';
+import '../widgets/post_detail_screen.dart';
+import 'widgets/explore_post_card.dart';
 
-  ArtworkItem({
-    required this.imagePath,
-    required this.title,
-    required this.artist,
-  });
-}
-
-// List of all the content to display. This is placeholder data.
-final List<ArtworkItem> items = [
-  ArtworkItem(imagePath: 'assets/Mosaic_Art.jpeg', title: 'Cosmic Shards', artist: 'Priya Sharma'),
-  ArtworkItem(imagePath: 'assets/Glass.jpg', title: 'Molten Light', artist: 'Rohan Mehta'),
-  ArtworkItem(imagePath: 'assets/Wooden_Toys.jpeg', title: 'Forest Friends', artist: 'Anjali Verma'),
-  ArtworkItem(imagePath: 'assets/Ceramic.jpg', title: 'Earthly Bowls', artist: 'Vikram Singh'),
-  // Add more items to see the grid grow
-  ArtworkItem(imagePath: 'assets/Mosaic_Art.jpeg', title: 'Galaxy in Blue', artist: 'Priya Sharma'),
-  ArtworkItem(imagePath: 'assets/Ceramic.jpg', title: 'Glazed Dreams', artist: 'Vikram Singh'),
-  ArtworkItem(imagePath: 'assets/Glass.jpg', title: 'Sun Catcher', artist: 'Rohan Mehta'),
-  ArtworkItem(imagePath: 'assets/Wooden_Toys.jpeg', title: 'Playful Shapes', artist: 'Anjali Verma'),
-];
-
-
-class ExploreScreen extends StatelessWidget {
+class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // LayoutBuilder helps make the grid responsive to different screen sizes.
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        int crossAxisCount;
-        // Determine the number of columns based on the available width.
-        if (constraints.maxWidth > 1200) {
-          crossAxisCount = 5;
-        } else if (constraints.maxWidth > 800) {
-          crossAxisCount = 4;
-        } else {
-          crossAxisCount = 2;
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: StaggeredGrid.count(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            // We map our data list to a list of ArtworkCard widgets.
-            children: items.asMap().entries.map((entry) {
-              int index = entry.key;
-              ArtworkItem item = entry.value;
-              // Create different tile sizes for a dynamic look
-              return StaggeredGridTile.count(
-                crossAxisCellCount: (index % 5 == 0 || index % 5 == 3) ? 2 : 1,
-                mainAxisCellCount: (index % 5 == 0 || index % 5 == 3) ? 2 : 1.5,
-                child: ArtworkCard(item: item),
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
+  State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
+class _ExploreScreenState extends State<ExploreScreen> {
+  final PostService _postService = PostService();
+  List<Post> _posts = [];
+  bool _isLoading = true;
+  String? _error;
 
-// A reusable card widget for displaying each art piece.
-// In a real app, this would be in 'lib/presentation/widgets/artwork_card.dart'.
-class ArtworkCard extends StatelessWidget {
-  final ArtworkItem item;
+  @override
+  void initState() {
+    super.initState();
+    _loadPosts();
+  }
 
-  const ArtworkCard({super.key, required this.item});
+  Future<void> _loadPosts() async {
+    try {
+      final posts = await _postService.getAllPosts();
+      if (mounted) {
+        setState(() {
+          _posts = posts;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refreshPosts() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    await _loadPosts();
+  }
+
+  void _openPostDetail(Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => PostDetailScreen(post: post)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF0EBE3),
+      body: Column(
         children: [
-          // Background Image
-          Image.asset(
-            item.imagePath,
-            fit: BoxFit.cover,
-          ),
-          
-          // Gradient overlay for better text readability at the bottom.
+          // Header
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                stops: const [0.6, 1.0],
-              ),
-            ),
-          ),
-
-          // Text Content
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+            child: Row(
               children: [
-                Text(
-                  item.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
+                const Text(
+                  'Explore',
+                  style: TextStyle(
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Lora',
+                    fontFamily: 'Serif', // Example of a serif font
+                    color: Color(0xFF002924),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'by ${item.artist}',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontFamily: 'Lora',
-                  ),
+                const Spacer(),
+                IconButton(
+                  onPressed: _refreshPosts,
+                  icon: const Icon(Icons.refresh, color: Color(0xFF002924)),
                 ),
               ],
             ),
+          ),
+
+          // Content
+          Expanded(
+            child:
+                _isLoading
+                    ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF002924),
+                      ),
+                    )
+                    : _error != null
+                    ? Center(child: Text('Error: $_error'))
+                    : _posts.isEmpty
+                    ? const Center(child: Text('No posts yet.'))
+                    : RefreshIndicator(
+                      onRefresh: _refreshPosts,
+                      child: MasonryGridView.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: _posts.length,
+                        itemBuilder: (context, index) {
+                          final post = _posts[index];
+                          // Example of varying cell sizes
+                          final crossAxisCellCount = (index % 3 == 0) ? 2 : 1;
+                          final mainAxisCellCount =
+                              (index % 4 == 0)
+                                  ? 1.5
+                                  : ((index % 3 == 0) ? 1.2 : 1.8);
+
+                          return StaggeredGridTile.count(
+                            crossAxisCellCount: crossAxisCellCount,
+                            mainAxisCellCount: mainAxisCellCount,
+                            child: ExplorePostCard(
+                              post: post,
+                              onTap: () => _openPostDetail(post),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
           ),
         ],
       ),

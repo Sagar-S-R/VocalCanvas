@@ -6,7 +6,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 
 class VoiceRecorderWidget extends StatefulWidget {
-  final Function(String) onGenerationComplete;
+  final Function(
+    String content,
+    String title,
+    String location,
+    List<String> hashtags,
+    String caption,
+  )
+  onGenerationComplete;
 
   const VoiceRecorderWidget({super.key, required this.onGenerationComplete});
 
@@ -29,7 +36,6 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
     super.initState();
     _initSpeechToText();
 
-    
     _apiKey = dotenv.env['GROQ_API_KEY'] ?? '';
   }
 
@@ -40,18 +46,23 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
   @override
   void dispose() {
     _audioRecorder.dispose();
+    if (_speechToText.isListening) {
+      _speechToText.cancel();
+    }
     super.dispose();
   }
 
   Future<void> _generatePostWithGroq(String transcription) async {
     if (_apiKey.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Groq API key is missing. Please add it to your .env file.',
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Groq API key is missing. Please add it to your .env file.',
+            ),
           ),
-        ),
-      );
+        );
+      }
       return;
     }
 
@@ -61,30 +72,58 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       'Content-Type': 'application/json',
     };
 
-    final prompt =
-        'Take this transcription and generate a 5-line paragraph about this artist for their Instagram, with 5 relevant hashtags. '
-        'Transcription: "$transcription"';
-
     final body = jsonEncode({
-      "messages": [
-        {"role": "user", "content": prompt},
-      ],
       "model": "llama3-8b-8192",
+      "messages": [
+        {
+          "role": "system",
+          "content":
+              "You are an AI assistant that creates art posts from voice descriptions. Analyze the transcription and create a beautiful art post. Return a JSON object with: {\"title\": \"<1-2 words catchy title like 'Mosaic Art', 'Digital Dreams', etc.>\", \"location\": \"<inferred or mentioned location, or 'Unknown'>\", \"hashtags\": [\"#art\", \"#creative\", \"#inspiration\"], \"content\": \"<A poetic 3-4 sentence description about the artwork that captures emotion and story. Make it inspiring and artistic, like describing a beautiful art piece.>\", \"caption\": \"<A short inspirational quote or caption about art/creativity>\"}. Focus on making content that sounds like describing a beautiful artwork or creative piece.",
+        },
+        {"role": "user", "content": transcription},
+      ],
+      "temperature": 0.8,
+      "response_format": {"type": "json_object"},
     });
 
     try {
       final response = await http.post(url, headers: headers, body: body);
-      if (response.statusCode == 200) {
-        final responseBody = jsonDecode(response.body);
-        final generatedPost = responseBody['choices'][0]['message']['content'];
-        widget.onGenerationComplete(generatedPost);
-      } else {
-        print('API Error: ${response.body}');
-        widget.onGenerationComplete("Error: Could not generate post.");
+      if (mounted) {
+        if (response.statusCode == 200) {
+          final responseBody = jsonDecode(response.body);
+          final contentJson = responseBody['choices'][0]['message']['content'];
+          final extractedData = jsonDecode(contentJson);
+
+          widget.onGenerationComplete(
+            extractedData['content'] ?? transcription,
+            extractedData['title'] ?? 'Untitled',
+            extractedData['location'] ?? 'Unknown',
+            List<String>.from(extractedData['hashtags'] ?? []),
+            extractedData['caption'] ?? 'Every piece tells a story',
+          );
+        } else {
+          print('API Error: ${response.body}');
+          // Fallback with just the transcription
+          widget.onGenerationComplete(
+            transcription,
+            'Untitled',
+            'Unknown',
+            [],
+            'Every piece tells a story',
+          );
+        }
       }
     } catch (e) {
       print('Network Error: $e');
-      widget.onGenerationComplete("Error: Network issue.");
+      if (mounted) {
+        widget.onGenerationComplete(
+          transcription,
+          'Untitled',
+          'Unknown',
+          [],
+          'Every piece tells a story',
+        );
+      }
     }
   }
 
@@ -94,16 +133,20 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         await _audioRecorder.stop();
         await _speechToText.stop();
 
-        setState(() {
-          _isRecording = false;
-          _isGenerating = true;
-        });
+        if (mounted) {
+          setState(() {
+            _isRecording = false;
+            _isGenerating = true;
+          });
+        }
 
         await _generatePostWithGroq(_transcribedText);
 
-        setState(() {
-          _isGenerating = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isGenerating = false;
+          });
+        }
       } else {
         await _audioRecorder.start(
           const RecordConfig(),
@@ -111,14 +154,18 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         );
         _speechToText.listen(
           onResult: (result) {
-            setState(() {
-              _transcribedText = result.recognizedWords;
-            });
+            if (mounted) {
+              setState(() {
+                _transcribedText = result.recognizedWords;
+              });
+            }
           },
         );
-        setState(() {
-          _isRecording = true;
-        });
+        if (mounted) {
+          setState(() {
+            _isRecording = true;
+          });
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -150,13 +197,14 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
               ],
             ),
             child: Center(
-              child: _isGenerating
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Icon(
-                      _isRecording ? Icons.stop : Icons.mic,
-                      color: Colors.white,
-                      size: 80,
-                    ),
+              child:
+                  _isGenerating
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Icon(
+                        _isRecording ? Icons.stop : Icons.mic,
+                        color: Colors.white,
+                        size: 80,
+                      ),
             ),
           ),
         ),
