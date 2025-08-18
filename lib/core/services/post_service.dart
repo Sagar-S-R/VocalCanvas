@@ -14,6 +14,7 @@ class PostService {
     required String title,
     required String content,
     required String userId,
+    String? caption,
     String? location,
     List<String>? hashtags,
     File? imageFile,
@@ -38,6 +39,7 @@ class PostService {
       id: '', // Firestore will generate this
       title: title,
       content: content,
+      caption: caption,
       userId: userId,
       imageUrl: imageUrl,
       location: location ?? 'Default Location',

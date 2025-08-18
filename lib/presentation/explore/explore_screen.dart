@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'dart:math';
 
 import '../../core/services/post_service.dart';
 import '../../data/models/post.dart';
-import '../widgets/post_detail_screen.dart';
+import '../home/home_screen.dart'; // Import for PostDetailOverlay
 import 'widgets/explore_post_card.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Post> _posts = [];
   bool _isLoading = true;
   String? _error;
+  final _random = Random();
 
   @override
   void initState() {
@@ -53,9 +55,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   void _openPostDetail(Post post) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => PostDetailScreen(post: post)),
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder:
+            (BuildContext context, _, __) => PostDetailOverlay(post: post),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
     );
   }
 
@@ -75,7 +83,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Serif', // Example of a serif font
+                    fontFamily: 'Serif',
                     color: Color(0xFF002924),
                   ),
                 ),
@@ -104,23 +112,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     : RefreshIndicator(
                       onRefresh: _refreshPosts,
                       child: MasonryGridView.count(
-                        crossAxisCount: 2,
+                        crossAxisCount: 4, // Changed to 4 columns
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         itemCount: _posts.length,
                         itemBuilder: (context, index) {
                           final post = _posts[index];
-                          // Example of varying cell sizes
-                          final crossAxisCellCount = (index % 3 == 0) ? 2 : 1;
-                          final mainAxisCellCount =
-                              (index % 4 == 0)
-                                  ? 1.5
-                                  : ((index % 3 == 0) ? 1.2 : 1.8);
-
-                          return StaggeredGridTile.count(
-                            crossAxisCellCount: crossAxisCellCount,
-                            mainAxisCellCount: mainAxisCellCount,
+                          // More dynamic sizing
+                          final height = (1 + _random.nextInt(3)) * 100.0;
+                          return SizedBox(
+                            height: height,
                             child: ExplorePostCard(
                               post: post,
                               onTap: () => _openPostDetail(post),

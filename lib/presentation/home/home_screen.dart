@@ -7,182 +7,290 @@ import '../exhibition/exhibition_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../core/services/post_service.dart';
 import '../../data/models/post.dart';
+import '../profile/profile_screen.dart'; // Import ProfileScreen
 
 // -----------------------------------------------------------------
-// 1. HOME SCREEN WIDGET (NOW FETCHES FROM FIREBASE)
+// 1. HOME SCREEN - INSTAGRAM-STYLE FEED
 // -----------------------------------------------------------------
-class FirebasePostFeed extends StatelessWidget {
+class HomeFeedScreen extends StatelessWidget {
   final PostService _postService = PostService();
 
-  FirebasePostFeed({super.key});
+  HomeFeedScreen({super.key});
+
+  void _showPostDetails(BuildContext context, Post post) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder: (BuildContext context, _, __) => PostDetailOverlay(post: post),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0EBE3),
-      body: Stack(
-        children: [
-          // Tree image occupying the right side border
-          Positioned(
-            top: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 150, // Width of the tree image area
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/tree.png"),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600), // Constrain width like Instagram
+          child: StreamBuilder<List<Post>>(
+            stream: _postService.getPostsStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF002924)));
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('No posts to show.'));
+              }
+
+              final posts = snapshot.data!;
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 40.0),
+                itemCount: posts.length,
+                itemBuilder: (context, index) {
+                  final post = posts[index];
+                  return HomePostCard(
+                    post: post,
+                    onTap: () => _showPostDetails(context, post),
+                  );
+                },
+              );
+            },
           ),
-          // Main content area with posts
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              60,
-              60,
-              190,
-              60,
-            ), // L, T, R, B padding
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Text
-                const Text(
-                  'Good morning, User',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 48,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Expanded area for the post grid
-                Expanded(
-                  child: StreamBuilder<List<Post>>(
-                    stream: _postService.getPostsStream(),
-                    builder: (context, snapshot) {
-                      // --- Loading State ---
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      // --- Error State ---
-                      if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      }
-                      // --- No Data State ---
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('No posts yet.'));
-                      }
-                      // --- Data Loaded State ---
-                      final posts = snapshot.data!;
-                      return GridView.builder(
-                        padding: const EdgeInsets.only(top: 20),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3, // Adjust number of columns
-                              crossAxisSpacing: 24,
-                              mainAxisSpacing: 24,
-                              childAspectRatio: 0.9,
-                            ),
-                        itemCount: posts.length,
-                        itemBuilder: (context, index) {
-                          final post = posts[index];
-                          // This is the container for each post "box"
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 0, 41, 36),
-                              borderRadius: BorderRadius.circular(12.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: PostGridItem(post: post),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
 // -----------------------------------------------------------------
-// 2. WIDGET FOR A SINGLE POST ITEM IN THE GRID
+// 2. WIDGET FOR A SINGLE POST ON THE HOME FEED
 // -----------------------------------------------------------------
-class PostGridItem extends StatelessWidget {
+class HomePostCard extends StatelessWidget {
   final Post post;
-  const PostGridItem({super.key, required this.post});
+  final VoidCallback onTap;
+
+  const HomePostCard({super.key, required this.post, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image takes up most of the space
-          if (post.imageUrl != null)
-            Expanded(
-              child: Image.network(
-                post.imageUrl!,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder:
-                    (context, error, stackTrace) => const Center(
-                      child: Icon(
-                        Icons.image_not_supported,
-                        color: Colors.white54,
-                      ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 40.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Post Header
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    backgroundColor: Color(0xFF002924),
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color(0xFF002924),
+                          ),
+                        ),
+                        if (post.location?.isNotEmpty == true)
+                          Text(
+                            post.location!,
+                            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                          ),
+                      ],
                     ),
+                  ),
+                ],
               ),
             ),
-          // Text content at the bottom
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  post.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+            // Post Image
+            if (post.imageUrl != null)
+              ClipRRect(
+                // No border radius here, the parent container handles it
+                child: Image.network(
+                  post.imageUrl!,
+                  width: double.infinity,
+                  height: 400,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 400,
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: Icon(Icons.image_not_supported, color: Colors.grey),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'By: ${post.userId}',
-                  style: const TextStyle(fontSize: 12, color: Colors.white70),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+              ),
+            // Action Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.favorite_border, color: Color(0xFF002924)),
+                        onPressed: () { /* Like action */ },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.comment_outlined, color: Color(0xFF002924)),
+                        onPressed: () { /* Comment action */ },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.volume_up_outlined, color: Color(0xFF002924)),
+                        onPressed: () { /* Listen action */ },
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.bookmark_border, color: Color(0xFF002924)),
+                    onPressed: () { /* Bookmark action */ },
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            // Caption
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+              child: Text(
+                post.caption ?? '',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Color(0xFF002924)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 // -----------------------------------------------------------------
-// 3. MAIN SCAFFOLD WITH THE FIXED SIDEBAR & UPDATED FAB
+// 3. POST DETAIL OVERLAY
+// -----------------------------------------------------------------
+class PostDetailOverlay extends StatelessWidget {
+  final Post post;
+  const PostDetailOverlay({super.key, required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: Scaffold(
+        backgroundColor: Colors.black.withOpacity(0.5),
+        body: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Center(
+            child: GestureDetector(
+              onTap: () {}, // Prevents closing when tapping inside the detail view
+              child: Container(
+                margin: const EdgeInsets.all(40),
+                constraints: const BoxConstraints(maxWidth: 800),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0EBE3),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    // Image
+                    if (post.imageUrl != null)
+                      Expanded(
+                        flex: 2,
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(20),
+                            bottomLeft: Radius.circular(20),
+                          ),
+                          child: Image.network(
+                            post.imageUrl!,
+                            fit: BoxFit.cover,
+                            height: double.infinity,
+                            errorBuilder: (context, error, stackTrace) => const Center(
+                              child: Icon(Icons.image_not_supported, size: 50),
+                            ),
+                          ),
+                        ),
+                      ),
+                    // Details
+                    Expanded(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(post.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF002924))),
+                            const SizedBox(height: 8),
+                            if (post.location?.isNotEmpty == true)
+                              Text(post.location!, style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+                            const SizedBox(height: 8),
+                            const Divider(),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                child: Text(
+                                  post.content,
+                                  style: const TextStyle(fontSize: 16, height: 1.5, color: Color(0xFF002924)),
+                                ),
+                              ),
+                            ),
+                            const Divider(),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                IconButton(icon: const Icon(Icons.favorite_border), onPressed: () {}),
+                                IconButton(icon: const Icon(Icons.comment_outlined), onPressed: () {}),
+                                IconButton(icon: const Icon(Icons.volume_up_outlined), onPressed: () {}),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------
+// 4. MAIN SCAFFOLD WITH SIDEBAR LOGIC
 // -----------------------------------------------------------------
 class VocalCanvasHomePage extends StatefulWidget {
   const VocalCanvasHomePage({super.key});
@@ -195,55 +303,84 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
   int _selectedIndex = 0;
   bool _isRailExtended = false;
 
-  // Updated widget options
   static final List<Widget> _widgetOptions = <Widget>[
-    FirebasePostFeed(), // Home
-    ExploreScreen(),
+    HomeFeedScreen(),
+    const ExploreScreen(),
     const SearchScreen(),
     const ExhibitionScreen(),
-    const Center(child: Text('Profile Page')),
+    const ProfileScreen(),
     const SettingsScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF0EBE3),
       body: Stack(
         children: <Widget>[
-          // Main Content Area
-          Center(child: _widgetOptions.elementAt(_selectedIndex)),
+          // Main content area, with padding on the left to avoid the collapsed sidebar
+          Padding(
+            padding: const EdgeInsets.only(left: 72),
+            child: Stack(
+              children: [
+                Center(child: _widgetOptions.elementAt(_selectedIndex)),
+                Positioned(
+                  bottom: 40,
+                  right: 40,
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const CreateScreen()),
+                      );
+                    },
+                    backgroundColor: const Color(0xFF002924),
+                    foregroundColor: Colors.white,
+                    elevation: 8.0,
+                    tooltip: 'Create Post',
+                    child: const Icon(Icons.add, size: 36),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-          // Blurred Overlay when rail is extended
+          // Blurred overlay that appears ONLY when the sidebar is extended
           if (_isRailExtended)
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  _isRailExtended = false;
-                });
-              },
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                child: Container(color: Colors.black.withOpacity(0.2)),
+            Padding(
+              padding: const EdgeInsets.only(left: 72.0),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isRailExtended = false; // Collapse the sidebar on tap
+                  });
+                },
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.2), // Darken the background
+                  ),
+                ),
               ),
             ),
 
-          // Sidebar
+          // The sidebar itself, positioned on the far left. It overlays content when extended.
           MouseRegion(
             onEnter: (_) => setState(() => _isRailExtended = true),
             onExit: (_) => setState(() => _isRailExtended = false),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
-              width: _isRailExtended ? 250 : 70,
+              width: _isRailExtended ? 250 : 72, // Animate width change
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 0, 41, 36),
+                color: const Color(0xFF002924),
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withOpacity(0.2),
                     blurRadius: 20,
                     offset: const Offset(5, 0),
                   ),
@@ -256,36 +393,12 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                   Expanded(
                     child: ListView(
                       children: [
-                        _buildNavItem(
-                          icon: Icons.home,
-                          label: 'Home',
-                          index: 0,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.explore,
-                          label: 'Explore',
-                          index: 1,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.search,
-                          label: 'Search',
-                          index: 2,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.museum,
-                          label: 'Exhibition',
-                          index: 3,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.person,
-                          label: 'Profile',
-                          index: 4,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.settings,
-                          label: 'Settings',
-                          index: 5,
-                        ),
+                        _buildNavItem(icon: Icons.home, label: 'Home', index: 0),
+                        _buildNavItem(icon: Icons.explore, label: 'Explore', index: 1),
+                        _buildNavItem(icon: Icons.search, label: 'Search', index: 2),
+                        _buildNavItem(icon: Icons.museum, label: 'Exhibition', index: 3),
+                        _buildNavItem(icon: Icons.person, label: 'Profile', index: 4),
+                        _buildNavItem(icon: Icons.settings, label: 'Settings', index: 5),
                       ],
                     ),
                   ),
@@ -293,31 +406,12 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
               ),
             ),
           ),
-
-          // UPDATED "Create Post" FAB
-          Positioned(
-            bottom: 40,
-            right: 40,
-            child: FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CreateScreen()),
-                );
-              },
-              backgroundColor: const Color.fromARGB(255, 0, 41, 36),
-              foregroundColor: Colors.white,
-              elevation: 8.0,
-              tooltip: 'Create Post',
-              child: const Icon(Icons.add, size: 36),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  // DEFINITIVELY FIXED NAVIGATION ITEM WIDGET
+
   Widget _buildNavItem({
     required IconData icon,
     required String label,
@@ -341,57 +435,40 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
           },
           child: SizedBox(
             height: 56,
-            child:
-                _isRailExtended
-                    // Use a Row ONLY when expanded
-                    ? Row(
-                      children: <Widget>[
-                        const SizedBox(width: 16), // Left padding
-                        Icon(
-                          icon,
-                          color:
-                              isSelected
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.7),
-                          size: 24,
-                        ),
-                        const SizedBox(
-                          width: 12,
-                        ), // Space between icon and text
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              color:
-                                  isSelected
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.7),
-                              fontWeight:
-                                  isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                              fontSize: 16,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    )
-                    // Use a simple Center when collapsed to prevent overflow
-                    : Center(
-                      child: Icon(
+            child: _isRailExtended
+                ? Row(
+                    children: <Widget>[
+                      const SizedBox(width: 16),
+                      Icon(
                         icon,
-                        color:
-                            isSelected
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.7),
+                        color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
                         size: 24,
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                            fontSize: 16,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  )
+                : Center(
+                    child: Icon(
+                      icon,
+                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
+                      size: 24,
                     ),
+                  ),
           ),
         ),
-      ),
-    );
+      ));
+  
   }
 }
 

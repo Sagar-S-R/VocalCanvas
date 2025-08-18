@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart'; // <-- Import dotenv
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'presentation/home/home_screen.dart'; // Import your home screen
+import 'presentation/auth/auth_page.dart';
 
 Future<void> main() async {
   // Ensure Flutter binding is ready before we load env vars
@@ -58,8 +59,12 @@ class VocalCanvasApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const VocalCanvasHomePage(),
       debugShowCheckedModeBanner: false,
+      initialRoute: '/auth',
+      routes: {
+        '/auth': (context) => const AuthPage(),
+        '/home': (context) => const VocalCanvasHomePage(),
+      },
     );
   }
 }

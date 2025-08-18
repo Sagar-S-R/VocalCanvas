@@ -5,6 +5,7 @@ class Post {
   final String userId;
   final String title;
   final String content;
+  final String? caption; // Added caption
   final String? imageUrl;
   final String? location;
   final List<String> hashtags;
@@ -17,6 +18,7 @@ class Post {
     required this.userId,
     required this.title,
     required this.content,
+    this.caption, // Added caption
     this.imageUrl,
     this.location,
     required this.hashtags,
@@ -49,6 +51,7 @@ class Post {
       userId: data['userId'] ?? '',
       title: data['title'] ?? '',
       content: data['content'] ?? '',
+      caption: data['caption'], // Added caption
       imageUrl: data['imageUrl'],
       location: data['location'],
       hashtags: hashtags,
@@ -63,6 +66,7 @@ class Post {
       'userId': userId,
       'title': title,
       'content': content,
+      'caption': caption, // Added caption
       'imageUrl': imageUrl,
       'location': location,
       'hashtags': hashtags,
