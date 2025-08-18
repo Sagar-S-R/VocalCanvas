@@ -1,4 +1,4 @@
-VocalCanvas is a Flutter desktop-first application that helps artists turn spoken descriptions of their work into short social posts (Instagram-ready) using speech transcription + a large language model (LLM) generation step.
+VocalCanvas is a Flutter voice-first application that helps artists turn spoken descriptions of their work into short social posts (Instagram-ready) using speech transcription + a large language model (LLM) generation step.
 
 This README explains how to set up the project locally (Windows PowerShell), which environment variables are required, how to run the app, and where known issues live.
 
