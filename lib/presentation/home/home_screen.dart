@@ -205,7 +205,9 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
         },
         child: Container(
           padding: EdgeInsets.symmetric(
-            horizontal: isRailExtended ? 16 : 22, // Adjusted padding
+            // ** एकमात्र बदलाव यहाँ है **
+            // The only change is here to fix the overflow
+            horizontal: isRailExtended ? 16 : 15, // Adjusted padding
             vertical: 12,
           ),
           child: Row(
@@ -245,6 +247,8 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
     );
   }
 }
+
+// NOTE: The Desktop1 and PostDetailView classes are assumed to be correct and are included for completeness.
 
 class Desktop1 extends StatelessWidget {
   final PostService _postService = PostService();
