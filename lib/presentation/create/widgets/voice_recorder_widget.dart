@@ -16,10 +16,15 @@ class VoiceRecorderWidget extends StatefulWidget {
     List<String> hashtags,
     String caption,
     Uint8List? audioBytes,
-  ) onGenerationComplete;
+  )
+  onGenerationComplete;
   final String aiRole;
 
-  const VoiceRecorderWidget({super.key, required this.onGenerationComplete, this.aiRole = 'Artist'});
+  const VoiceRecorderWidget({
+    super.key,
+    required this.onGenerationComplete,
+    this.aiRole = 'Artist',
+  });
 
   @override
   State<VoiceRecorderWidget> createState() => _VoiceRecorderWidgetState();

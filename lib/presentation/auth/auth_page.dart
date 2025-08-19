@@ -15,7 +15,8 @@ class AuthPage extends StatefulWidget {
   State<AuthPage> createState() => _AuthPageState();
 }
 
-class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin {
+class _AuthPageState extends State<AuthPage>
+    with SingleTickerProviderStateMixin {
   String _role = 'Artist'; // Artist or Admirer
   // Registration step control
   int _registerStep = 0; // 0: form, 1: voice recording
@@ -37,9 +38,9 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
   bool _showOtpField = false;
 
   // Colors
-    final Color primaryColor = const Color(0xFF002924);
-    final Color backgroundColor = const Color(0xFFF5F5DC);
-    final Color accentColor = const Color(0xFFD2B48C);
+  final Color primaryColor = const Color(0xFF002924);
+  final Color backgroundColor = const Color(0xFFF5F5DC);
+  final Color accentColor = const Color(0xFFD2B48C);
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -152,7 +153,11 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         children: [
           Text(
             'Select your role:',
-            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -161,7 +166,9 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                 label: const Text('Artist'),
                 selected: _role == 'Artist',
                 onSelected: (selected) {
-                  setState(() { _role = 'Artist'; });
+                  setState(() {
+                    _role = 'Artist';
+                  });
                 },
               ),
               const SizedBox(width: 16),
@@ -169,13 +176,22 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
                 label: const Text('Admirer'),
                 selected: _role == 'Admirer',
                 onSelected: (selected) {
-                  setState(() { _role = 'Admirer'; });
+                  setState(() {
+                    _role = 'Admirer';
+                  });
                 },
               ),
             ],
           ),
           const SizedBox(height: 24),
-          Text('Record a short voice intro for your bio', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor)),
+          Text(
+            'Record a short voice intro for your bio',
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
           const SizedBox(height: 16),
           VoiceRecorderWidget(
             onGenerationComplete: (
@@ -201,10 +217,16 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Generated Bio:', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  Text(
+                    'Generated Bio:',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+                  ),
                   Text(_generatedBio!, style: GoogleFonts.inter()),
                   if (_generatedLocation != null)
-                    Text('Location: $_generatedLocation', style: GoogleFonts.inter()),
+                    Text(
+                      'Location: $_generatedLocation',
+                      style: GoogleFonts.inter(),
+                    ),
                 ],
               ),
             ),
@@ -219,8 +241,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
               },
               child: const Text('Finish Registration'),
             ),
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator()),
+          if (_isLoading) const Center(child: CircularProgressIndicator()),
         ],
       );
     } else if (_isRegisterMode && _registerStep == 2) {
@@ -269,8 +290,7 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
               },
               child: const Text('Next: Record Voice Bio'),
             ),
-          if (!_isRegisterMode)
-            _buildAuthButton(),
+          if (!_isRegisterMode) _buildAuthButton(),
           const SizedBox(height: 16),
           _buildToggleModeButton(),
         ],
@@ -404,7 +424,10 @@ class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin
         const SizedBox(height: 16),
         _buildSocialButton(
           label: 'Continue with Phone',
-          icon: const Icon(Icons.phone_android_rounded, color: Color(0xFF002924)),
+          icon: const Icon(
+            Icons.phone_android_rounded,
+            color: Color(0xFF002924),
+          ),
           onPressed: _isLoading ? null : _showPhoneAuthDialog,
         ),
       ],
