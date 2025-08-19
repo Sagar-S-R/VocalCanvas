@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +15,7 @@ class VoiceRecorderWidget extends StatefulWidget {
     String location,
     List<String> hashtags,
     String caption,
+    Uint8List? audioBytes,
   )
   onGenerationComplete;
 
@@ -25,6 +29,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
   bool _isRecording = false;
   bool _isGenerating = false;
   String _transcribedText = "";
+  Uint8List? _audioBytes;
 
   final AudioRecorder _audioRecorder = AudioRecorder();
   final SpeechToText _speechToText = SpeechToText();
@@ -100,6 +105,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
             extractedData['location'] ?? 'Unknown',
             List<String>.from(extractedData['hashtags'] ?? []),
             extractedData['caption'] ?? 'Every piece tells a story',
+            _audioBytes,
           );
         } else {
           print('API Error: ${response.body}');
@@ -110,6 +116,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
             'Unknown',
             [],
             'Every piece tells a story',
+            _audioBytes,
           );
         }
       }
@@ -122,6 +129,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
           'Unknown',
           [],
           'Every piece tells a story',
+          _audioBytes,
         );
       }
     }
@@ -130,13 +138,36 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
   Future<void> _handleMicTap() async {
     if (await _audioRecorder.hasPermission()) {
       if (_isRecording) {
-        await _audioRecorder.stop();
-        await _speechToText.stop();
-
+        String? path;
+        Uint8List? audioBytes;
+        if (kIsWeb) {
+          // On web, stop and get URL, then fetch bytes
+          path = await _audioRecorder.stop();
+          await _speechToText.stop();
+          if (path != null) {
+            try {
+              final response = await http.get(Uri.parse(path));
+              audioBytes = response.bodyBytes;
+            } catch (e) {
+              print('Error fetching audio bytes from web: $e');
+            }
+          }
+        } else {
+          path = await _audioRecorder.stop();
+          await _speechToText.stop();
+          if (path != null) {
+            try {
+              audioBytes = await File(path).readAsBytes();
+            } catch (e) {
+              print('Error reading audio bytes: $e');
+            }
+          }
+        }
         if (mounted) {
           setState(() {
             _isRecording = false;
             _isGenerating = true;
+            _audioBytes = audioBytes;
           });
         }
 
@@ -148,10 +179,17 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
           });
         }
       } else {
-        await _audioRecorder.start(
-          const RecordConfig(),
-          path: 'audio_recording.m4a',
-        );
+        if (kIsWeb) {
+          await _audioRecorder.start(
+            const RecordConfig(),
+            path: 'audio_recording_web.m4a', // dummy path for web
+          );
+        } else {
+          await _audioRecorder.start(
+            const RecordConfig(),
+            path: 'audio_recording.m4a',
+          );
+        }
         _speechToText.listen(
           onResult: (result) {
             if (mounted) {

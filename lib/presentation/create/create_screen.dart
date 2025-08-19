@@ -20,6 +20,7 @@ class _CreateScreenState extends State<CreateScreen> {
   String _caption = '';
   List<String> _hashtags = [];
   dynamic _image; // Can be File or XFile
+  Uint8List? _audioBytes;
   bool _isUploading = false;
   bool _isGenerating = false;
 
@@ -29,6 +30,7 @@ class _CreateScreenState extends State<CreateScreen> {
     String location,
     List<String> hashtags,
     String caption,
+    Uint8List? audioBytes,
   ) {
     if (mounted) {
       setState(() {
@@ -37,6 +39,7 @@ class _CreateScreenState extends State<CreateScreen> {
         _location = location;
         _hashtags = hashtags;
         _caption = caption;
+        _audioBytes = audioBytes;
         _isGenerating = false; // Generation is complete
       });
     }
@@ -75,9 +78,11 @@ class _CreateScreenState extends State<CreateScreen> {
         content: _content,
         title: _title,
         location: _location,
+        caption: _caption,
         hashtags: _hashtags,
         imageFile: !kIsWeb && _image != null ? _image as File : null,
         webImageFile: kIsWeb && _image != null ? _image as XFile : null,
+        audioBytes: _audioBytes,
         userId: 'current_user', // Replace with actual user ID
       );
 
@@ -128,6 +133,7 @@ class _CreateScreenState extends State<CreateScreen> {
                       location,
                       hashtags,
                       caption,
+                      audioBytes,
                     ) {
                       setState(() {
                         _isGenerating = true;
@@ -138,6 +144,7 @@ class _CreateScreenState extends State<CreateScreen> {
                         location,
                         hashtags,
                         caption,
+                        audioBytes,
                       );
                     },
                   )

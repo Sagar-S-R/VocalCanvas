@@ -7,6 +7,7 @@ class Post {
   final String content;
   final String? caption; // Added caption
   final String? imageUrl;
+  final String? audioUrl;
   final String? location;
   final List<String> hashtags;
   final DateTime timestamp;
@@ -20,6 +21,7 @@ class Post {
     required this.content,
     this.caption, // Added caption
     this.imageUrl,
+    this.audioUrl,
     this.location,
     required this.hashtags,
     required this.timestamp,
@@ -53,6 +55,7 @@ class Post {
       content: data['content'] ?? '',
       caption: data['caption'], // Added caption
       imageUrl: data['imageUrl'],
+      audioUrl: data['audioUrl'],
       location: data['location'],
       hashtags: hashtags,
       timestamp: (data['timestamp'] as Timestamp).toDate(),
@@ -68,6 +71,7 @@ class Post {
       'content': content,
       'caption': caption, // Added caption
       'imageUrl': imageUrl,
+      'audioUrl': audioUrl,
       'location': location,
       'hashtags': hashtags,
       'timestamp': Timestamp.fromDate(timestamp),

@@ -18,30 +18,35 @@ class PostService {
     String? location,
     List<String>? hashtags,
     File? imageFile,
+    Uint8List? audioBytes,
     XFile? webImageFile,
   }) async {
     String? imageUrl;
+    String? audioUrl;
 
     // Handle image upload for both web and mobile
     if (webImageFile != null && kIsWeb) {
-      // For web, convert image to base64 and store directly in Firestore
-      // In a production app, you'd want to use a proper storage service
       final bytes = await webImageFile.readAsBytes();
       final base64String = base64Encode(bytes);
       imageUrl = 'data:image/jpeg;base64,$base64String';
     } else if (imageFile != null && !kIsWeb) {
-      // For mobile, you would typically upload to Firebase Storage
-      // For now, we'll skip mobile image upload since Firebase Storage was removed
       imageUrl = null;
     }
 
+    // Handle audio upload from bytes
+    if (audioBytes != null) {
+      final base64String = base64Encode(audioBytes);
+      audioUrl = 'data:audio/m4a;base64,$base64String';
+    }
+
     final newPost = Post(
-      id: '', // Firestore will generate this
+      id: '',
       title: title,
       content: content,
       caption: caption,
       userId: userId,
       imageUrl: imageUrl,
+      audioUrl: audioUrl,
       location: location ?? 'Default Location',
       hashtags: hashtags ?? [],
       timestamp: DateTime.now(),
@@ -75,5 +80,51 @@ class PostService {
 
   Future<void> deletePost(String postId) async {
     await postsRef.doc(postId).delete();
+  }
+
+  // --- Likes ---
+  Future<void> toggleLike(String postId, String userId) async {
+    final postRef = postsRef.doc(postId);
+    final postSnapshot = await postRef.get();
+
+    if (postSnapshot.exists) {
+      final post = Post.fromFirestore(postSnapshot);
+      if (post.likes.contains(userId)) {
+        // User has already liked the post, so unlike it
+        postRef.update({
+          'likes': FieldValue.arrayRemove([userId]),
+        });
+      } else {
+        // User hasn't liked the post, so like it
+        postRef.update({
+          'likes': FieldValue.arrayUnion([userId]),
+        });
+      }
+    }
+  }
+
+  // --- Comments ---
+  Future<void> addComment(String postId, String userId, String text) async {
+    final comment = {
+      'userId': userId,
+      'text': text,
+      'timestamp': Timestamp.now(),
+    };
+
+    // Add the comment to the 'comments' subcollection
+    await postsRef.doc(postId).collection('comments').add(comment);
+
+    // Increment the commentsCount on the post
+    await postsRef.doc(postId).update({
+      'commentsCount': FieldValue.increment(1),
+    });
+  }
+
+  Stream<QuerySnapshot> getCommentsStream(String postId) {
+    return postsRef
+        .doc(postId)
+        .collection('comments')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
   }
 }
