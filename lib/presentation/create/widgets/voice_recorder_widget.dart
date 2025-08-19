@@ -16,10 +16,10 @@ class VoiceRecorderWidget extends StatefulWidget {
     List<String> hashtags,
     String caption,
     Uint8List? audioBytes,
-  )
-  onGenerationComplete;
+  ) onGenerationComplete;
+  final String aiRole;
 
-  const VoiceRecorderWidget({super.key, required this.onGenerationComplete});
+  const VoiceRecorderWidget({super.key, required this.onGenerationComplete, this.aiRole = 'Artist'});
 
   @override
   State<VoiceRecorderWidget> createState() => _VoiceRecorderWidgetState();
@@ -83,7 +83,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         {
           "role": "system",
           "content":
-              "You are an AI assistant that creates art posts from voice descriptions. Analyze the transcription and create a beautiful art post. Return a JSON object with: {\"title\": \"<1-2 words catchy title like 'Mosaic Art', 'Digital Dreams', etc.>\", \"location\": \"<inferred or mentioned location, or 'Unknown'>\", \"hashtags\": [\"#art\", \"#creative\", \"#inspiration\"], \"content\": \"<A poetic 3-4 sentence description about the artwork that captures emotion and story. Make it inspiring and artistic, like describing a beautiful art piece.>\", \"caption\": \"<A short inspirational quote or caption about art/creativity>\"}. Focus on making content that sounds like describing a beautiful artwork or creative piece.",
+              "You are an AI assistant that creates user bios from voice descriptions. The user is registering as an ${widget.aiRole}. Analyze the transcription and create a beautiful bio for an ${widget.aiRole}. Return a JSON object with: {\"title\": \"<1-2 words catchy title like 'Mosaic Artist', 'Art Admirer', etc.>\", \"location\": \"<inferred or mentioned location, or 'Unknown'>\", \"hashtags\": [\"#art\", \"#creative\", \"#inspiration\"], \"content\": \"<A poetic 3-4 sentence bio that captures emotion and story. Make it inspiring and artistic, like describing a creative person or admirer.>\", \"caption\": \"<A short inspirational quote or caption about art/creativity>\"}. Focus on making content that sounds like describing a beautiful person or creative admirer.",
         },
         {"role": "user", "content": transcription},
       ],

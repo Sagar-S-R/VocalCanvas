@@ -2,7 +2,11 @@
 import 'package:flutter/material.dart';
 import '../../core/services/post_service.dart';
 import '../../data/models/post.dart';
-import '../home/home_screen.dart';
+import '../../data/models/user_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:audioplayers/audioplayers.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,24 +17,34 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final PostService _postService = PostService();
-  // TODO: Replace with actual Firebase Auth user ID
-  final String _userId = 'current_user';
-  // TODO: Fetch and show user details from Firebase Auth
-  String? _userEmail;
-  String? _userName;
-  String? _authProvider;
+  final String _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+  UserModel? _user;
   List<Post> _posts = [];
   bool _isLoading = true;
   String? _error;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    _loadUserPosts();
+    _loadUserDetailsAndPosts();
   }
 
-  Future<void> _loadUserPosts() async {
+  // ...existing code...
+
+  Future<void> _loadUserDetailsAndPosts() async {
     try {
+      // Fetch user details
+      final userDoc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(_userId)
+              .get();
+      if (userDoc.exists) {
+        _user = UserModel.fromFirestore(userDoc.data()!, _userId);
+      }
+      // Fetch posts
       final allPosts = await _postService.getAllPosts();
       final userPosts =
           allPosts.where((post) => post.userId == _userId).toList();
@@ -68,36 +82,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Icon(Icons.person, size: 40, color: Colors.white),
                   ),
                   const SizedBox(width: 24),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _userName ?? 'Art Lover',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF002924),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _userEmail != null
-                            ? 'Email: $_userEmail'
-                            : 'Bio: Creativity is my superpower.',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      if (_authProvider != null)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          'Registered via: $_authProvider',
+                          _user?.name ?? 'Art Lover',
                           style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black45,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF002924),
                           ),
                         ),
-                    ],
+                        const SizedBox(height: 8),
+                        if (_user?.email != null)
+                          Text(
+                            'Email: ${_user!.email}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        if (_user?.bio != null)
+                          Text(
+                            'Bio: ${_user!.bio}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        if (_user?.location != null)
+                          Text(
+                            'Location: ${_user!.location}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        if (_user?.audioUrl != null)
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  _isPlaying ? Icons.pause : Icons.volume_up,
+                                  color: Color(0xFF002924),
+                                ),
+                                onPressed: () async {
+                                  if (_isPlaying) {
+                                    await _audioPlayer.pause();
+                                    setState(() => _isPlaying = false);
+                                  } else {
+                                    final audioUrl = _user!.audioUrl!;
+                                    if (audioUrl.startsWith('data:audio')) {
+                                      final base64Str =
+                                          audioUrl.split(',').last;
+                                      try {
+                                        final bytes = base64Decode(base64Str);
+                                        await _audioPlayer.play(
+                                          BytesSource(bytes),
+                                        );
+                                        setState(() => _isPlaying = true);
+                                      } catch (e) {
+                                        print('Audio playback error: $e');
+                                      }
+                                    } else {
+                                      await _audioPlayer.play(
+                                        UrlSource(audioUrl),
+                                      );
+                                      setState(() => _isPlaying = true);
+                                    }
+                                  }
+                                },
+                              ),
+                              const Text('Listen to intro'),
+                            ],
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -137,26 +198,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             elevation: 4,
                             child: InkWell(
                               onTap: () {
-                                // Show post detail overlay
-                                Navigator.of(context).push(
-                                  PageRouteBuilder(
-                                    opaque: false,
-                                    pageBuilder:
-                                        (BuildContext context, _, __) =>
-                                            PostDetailOverlay(post: post),
-                                    transitionsBuilder: (
-                                      context,
-                                      animation,
-                                      secondaryAnimation,
-                                      child,
-                                    ) {
-                                      return FadeTransition(
-                                        opacity: animation,
-                                        child: child,
-                                      );
-                                    },
-                                  ),
-                                );
+                                // Show post detail overlay (disabled, not implemented)
+                                // Navigator.of(context).push(
+                                //   PageRouteBuilder(
+                                //     opaque: false,
+                                //     pageBuilder:
+                                //         (BuildContext context, _, __) =>
+                                //             PostDetailOverlay(post: post),
+                                //     transitionsBuilder: (
+                                //       context,
+                                //       animation,
+                                //       secondaryAnimation,
+                                //       child,
+                                //     ) {
+                                //       return FadeTransition(
+                                //         opacity: animation,
+                                //         child: child,
+                                //       );
+                                //     },
+                                //   ),
+                                // );
                               },
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

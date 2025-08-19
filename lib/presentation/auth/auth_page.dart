@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../create/widgets/voice_recorder_widget.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -11,8 +15,13 @@ class AuthPage extends StatefulWidget {
   State<AuthPage> createState() => _AuthPageState();
 }
 
-class _AuthPageState extends State<AuthPage>
-    with SingleTickerProviderStateMixin {
+class _AuthPageState extends State<AuthPage> with SingleTickerProviderStateMixin {
+  String _role = 'Artist'; // Artist or Admirer
+  // Registration step control
+  int _registerStep = 0; // 0: form, 1: voice recording
+  String? _generatedBio;
+  String? _generatedLocation;
+  Uint8List? _profileAudioBytes;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
@@ -28,9 +37,9 @@ class _AuthPageState extends State<AuthPage>
   bool _showOtpField = false;
 
   // Colors
-  static const Color primaryColor = Color(0xFF002924);
-  static const Color backgroundColor = Color(0xFFF5F5DC);
-  static const Color accentColor = Color(0xFFD2B48C);
+    final Color primaryColor = const Color(0xFF002924);
+    final Color backgroundColor = const Color(0xFFF5F5DC);
+    final Color accentColor = const Color(0xFFD2B48C);
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -99,11 +108,11 @@ class _AuthPageState extends State<AuthPage>
           width: 90,
           height: 90,
           decoration: BoxDecoration(
-            color: primaryColor,
+            color: const Color(0xFF002924),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: primaryColor.withOpacity(0.2),
+                color: const Color(0xFF002924).withOpacity(0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -112,7 +121,7 @@ class _AuthPageState extends State<AuthPage>
           child: const Icon(
             Icons.mic_rounded,
             size: 45,
-            color: backgroundColor,
+            color: Color(0xFFF5F5DC),
           ),
         ),
         const SizedBox(height: 16),
@@ -137,45 +146,136 @@ class _AuthPageState extends State<AuthPage>
   }
 
   Widget _buildAuthForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          _isRegisterMode ? 'Create your Account' : 'Welcome Back',
-          style: GoogleFonts.inter(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: primaryColor,
+    if (_isRegisterMode && _registerStep == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Select your role:',
+            style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
           ),
-        ),
-        const SizedBox(height: 24),
-        if (_isRegisterMode) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ChoiceChip(
+                label: const Text('Artist'),
+                selected: _role == 'Artist',
+                onSelected: (selected) {
+                  setState(() { _role = 'Artist'; });
+                },
+              ),
+              const SizedBox(width: 16),
+              ChoiceChip(
+                label: const Text('Admirer'),
+                selected: _role == 'Admirer',
+                onSelected: (selected) {
+                  setState(() { _role = 'Admirer'; });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text('Record a short voice intro for your bio', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor)),
+          const SizedBox(height: 16),
+          VoiceRecorderWidget(
+            onGenerationComplete: (
+              content,
+              title,
+              location,
+              hashtags,
+              caption,
+              audioBytes,
+            ) {
+              setState(() {
+                _generatedBio = content;
+                _generatedLocation = location;
+                _profileAudioBytes = audioBytes;
+                _isLoading = false;
+              });
+            },
+            aiRole: _role,
+          ),
+          if (_generatedBio != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Generated Bio:', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                  Text(_generatedBio!, style: GoogleFonts.inter()),
+                  if (_generatedLocation != null)
+                    Text('Location: $_generatedLocation', style: GoogleFonts.inter()),
+                ],
+              ),
+            ),
+          if (_generatedBio != null)
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _registerStep = 2;
+                  _isLoading = true;
+                });
+                _registerWithEmail();
+              },
+              child: const Text('Finish Registration'),
+            ),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator()),
+        ],
+      );
+    } else if (_isRegisterMode && _registerStep == 2) {
+      return Center(child: CircularProgressIndicator());
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            _isRegisterMode ? 'Create your Account' : 'Welcome Back',
+            style: GoogleFonts.inter(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
+          const SizedBox(height: 24),
+          if (_isRegisterMode) ...[
+            _buildTextField(
+              controller: _nameController,
+              label: 'Full Name',
+              icon: Icons.person_outline_rounded,
+            ),
+            const SizedBox(height: 16),
+          ],
           _buildTextField(
-            controller: _nameController,
-            label: 'Full Name',
-            icon: Icons.person_outline_rounded,
+            controller: _emailController,
+            label: 'Email',
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 16),
+          _buildTextField(
+            controller: _passwordController,
+            label: 'Password',
+            icon: Icons.lock_outline_rounded,
+            obscureText: true,
+          ),
+          const SizedBox(height: 24),
+          if (_isRegisterMode)
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _registerStep = 1;
+                });
+              },
+              child: const Text('Next: Record Voice Bio'),
+            ),
+          if (!_isRegisterMode)
+            _buildAuthButton(),
+          const SizedBox(height: 16),
+          _buildToggleModeButton(),
         ],
-        _buildTextField(
-          controller: _emailController,
-          label: 'Email',
-          icon: Icons.email_outlined,
-          keyboardType: TextInputType.emailAddress,
-        ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _passwordController,
-          label: 'Password',
-          icon: Icons.lock_outline_rounded,
-          obscureText: true,
-        ),
-        const SizedBox(height: 24),
-        _buildAuthButton(),
-        const SizedBox(height: 16),
-        _buildToggleModeButton(),
-      ],
-    );
+      );
+    }
   }
 
   Widget _buildTextField({
@@ -202,7 +302,7 @@ class _AuthPageState extends State<AuthPage>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor, width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF002924), width: 1.5),
         ),
       ),
     );
@@ -304,7 +404,7 @@ class _AuthPageState extends State<AuthPage>
         const SizedBox(height: 16),
         _buildSocialButton(
           label: 'Continue with Phone',
-          icon: const Icon(Icons.phone_android_rounded, color: primaryColor),
+          icon: const Icon(Icons.phone_android_rounded, color: Color(0xFF002924)),
           onPressed: _isLoading ? null : _showPhoneAuthDialog,
         ),
       ],
@@ -394,13 +494,16 @@ class _AuthPageState extends State<AuthPage>
   Future<void> _registerWithEmail() async {
     if (_nameController.text.isEmpty ||
         _emailController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
-      _showErrorDialog('Please fill in all fields.');
+        _passwordController.text.isEmpty ||
+        _generatedBio == null ||
+        _profileAudioBytes == null) {
+      _showErrorDialog('Please fill in all fields and record your bio.');
       return;
     }
 
     setState(() {
       _isLoading = true;
+      _registerStep = 2;
     });
 
     try {
@@ -413,6 +516,20 @@ class _AuthPageState extends State<AuthPage>
       // Update user profile with name
       await userCredential.user?.updateDisplayName(_nameController.text.trim());
 
+      // Store user details in Firestore
+      final userId = userCredential.user?.uid;
+      if (userId != null) {
+        final audioBase64 = base64Encode(_profileAudioBytes!);
+        final audioUrl = 'data:audio/m4a;base64,$audioBase64';
+        await FirebaseFirestore.instance.collection('users').doc(userId).set({
+          'name': _nameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'bio': _generatedBio,
+          'location': _generatedLocation,
+          'audioUrl': audioUrl,
+        });
+      }
+
       _navigateToHome();
     } on FirebaseAuthException catch (e) {
       _showErrorDialog(_getFirebaseAuthErrorMessage(e));
@@ -420,6 +537,7 @@ class _AuthPageState extends State<AuthPage>
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _registerStep = 0;
         });
       }
     }
