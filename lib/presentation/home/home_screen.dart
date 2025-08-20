@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // Needed for ImageFilter
 import 'package:vocal_canvas/presentation/home/widgets/post_card.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../explore/explore_screen.dart';
 import '../search/search_screen.dart';
@@ -266,7 +267,7 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                     backgroundColor: const Color(0xFF002924),
                     foregroundColor: Colors.white,
                     elevation: 8.0,
-                    tooltip: 'Create Post',
+                    tooltip: 'create_post'.tr(),
                     child: const Icon(Icons.add, size: 36),
                   ),
                 ),
@@ -326,32 +327,32 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                       children: [
                         _buildNavItem(
                           icon: Icons.home,
-                          label: 'Home',
+                          label: 'home'.tr(),
                           index: 0,
                         ),
                         _buildNavItem(
                           icon: Icons.explore,
-                          label: 'Explore',
+                          label: 'explore'.tr(),
                           index: 1,
                         ),
                         _buildNavItem(
                           icon: Icons.search,
-                          label: 'Search',
+                          label: 'search'.tr(),
                           index: 2,
                         ),
                         _buildNavItem(
                           icon: Icons.museum,
-                          label: 'Exhibition',
+                          label: 'exhibition'.tr(),
                           index: 3,
                         ),
                         _buildNavItem(
                           icon: Icons.person,
-                          label: 'Profile',
+                          label: 'profile'.tr(),
                           index: 4,
                         ),
                         _buildNavItem(
                           icon: Icons.settings,
-                          label: 'Settings',
+                          label: 'settings'.tr(),
                           index: 5,
                         ),
                       ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -14,7 +15,7 @@ class SearchScreen extends StatelessWidget {
           TextField(
             style: const TextStyle(color: Colors.black, fontSize: 18),
             decoration: InputDecoration(
-              hintText: 'Search for artisans, artwork, or tags...',
+              hintText: 'search_artisans'.tr(),
               hintStyle: TextStyle(color: Colors.grey.shade600),
               prefixIcon: Icon(Icons.search, color: Colors.grey.shade700),
               filled: true,
@@ -23,13 +24,16 @@ class SearchScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.0),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 24.0),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 20.0,
+                horizontal: 24.0,
+              ),
             ),
           ),
           const SizedBox(height: 40),
 
           // "Recent Searches" section
-          _buildSectionHeader(context, 'Recent Searches'),
+          _buildSectionHeader(context, 'recent_searches'.tr()),
           const SizedBox(height: 16),
           Wrap(
             spacing: 12.0,
@@ -44,7 +48,7 @@ class SearchScreen extends StatelessWidget {
           const SizedBox(height: 40),
 
           // "Browse by Category" section
-          _buildSectionHeader(context, 'Browse by Category'),
+          _buildSectionHeader(context, 'browse_by_category'.tr()),
           const SizedBox(height: 16),
           GridView.count(
             crossAxisCount: 4, // Responsive: could use LayoutBuilder here too
@@ -98,9 +102,7 @@ class SearchScreen extends StatelessWidget {
         children: [
           Image.asset(imagePath, fit: BoxFit.cover),
           Container(
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.4),
-            ),
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.4)),
           ),
           Center(
             child: Text(

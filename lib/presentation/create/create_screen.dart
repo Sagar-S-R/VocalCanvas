@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'widgets/voice_recorder_widget.dart'; // Import the voice recorder widget
 import '../../core/services/post_service.dart';
 
@@ -111,7 +112,7 @@ class _CreateScreenState extends State<CreateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create New Post'),
+        title: Text('create_new_post'.tr()),
         backgroundColor: const Color(0xFFF0EBE3),
         elevation: 0,
         foregroundColor: Colors.black,

@@ -7,9 +7,13 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
+import '../settings/settings_screen.dart';
 
 class AuthPage extends StatefulWidget {
-  const AuthPage({super.key});
+  final Function(bool) onThemeToggle;
+
+  const AuthPage({super.key, required this.onThemeToggle});
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -74,6 +78,27 @@ class _AuthPageState extends State<AuthPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
+      appBar: AppBar(
+        title: Text("welcome".tr()),
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        foregroundColor: primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) =>
+                          SettingsScreen(onThemeToggle: widget.onThemeToggle),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

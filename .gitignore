@@ -71,9 +71,6 @@ coverage/
 *.tmp
 *.temp
 
-# Ignore asset copies
-assets/
-
 # IntelliJ related
 *.iml
 *.ipr
