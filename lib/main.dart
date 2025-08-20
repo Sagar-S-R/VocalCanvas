@@ -4,10 +4,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'presentation/home/home_screen.dart'; // Import your home screen
 import 'presentation/auth/auth_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:provider/provider.dart';
 import 'utils/locale_provider.dart';
+import 'utils/theme_provider.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   // Ensure Flutter binding is ready before we load env vars
@@ -15,6 +18,11 @@ Future<void> main() async {
 
   // Initialize easy_localization
   await EasyLocalization.ensureInitialized();
+
+  // Read saved language preference (default to English)
+  final prefs = await SharedPreferences.getInstance();
+  final savedLang = prefs.getString('languageCode') ?? 'en';
+  final startLocale = Locale(savedLang);
 
   // Load the .env file
   await dotenv.load(fileName: ".env");
@@ -32,47 +40,46 @@ Future<void> main() async {
         measurementId: "G-63ZLJZPLPS",
       ),
     );
+    // Ensure auth does not persist across page reloads in web builds.
+    try {
+      await FirebaseAuth.instance.setPersistence(Persistence.NONE);
+    } catch (_) {}
   } else {
     await Firebase.initializeApp();
   }
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [Locale('en'), Locale('hi')],
+      supportedLocales: const [Locale('en'), Locale('hi'), Locale('kn')],
+      startLocale: startLocale,
       path: 'assets/lang/',
       fallbackLocale: const Locale('en'),
-      child: ChangeNotifierProvider(
-        create: (_) => LocaleProvider(const Locale('en')),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) => LocaleProvider(const Locale('en')),
+          ),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ],
         child: const VocalCanvasApp(),
       ),
     ),
   );
 }
 
-class VocalCanvasApp extends StatefulWidget {
+class VocalCanvasApp extends StatelessWidget {
   const VocalCanvasApp({super.key});
 
   @override
-  State<VocalCanvasApp> createState() => _VocalCanvasAppState();
-}
-
-class _VocalCanvasAppState extends State<VocalCanvasApp> {
-  ThemeMode _themeMode = ThemeMode.light;
-
-  void _toggleTheme(bool isDark) {
-    setState(() {
-      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       title: 'VocalCanvas',
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      themeMode: _themeMode,
+      themeMode: themeProvider.themeMode,
       theme: ThemeData(
         brightness: Brightness.light,
         primarySwatch: Colors.teal,
@@ -93,6 +100,23 @@ class _VocalCanvasAppState extends State<VocalCanvasApp> {
             foregroundColor: Colors.white,
           ),
         ),
+        textTheme: TextTheme(
+          displayLarge: TextStyle(color: Colors.black87),
+          displayMedium: TextStyle(color: Colors.black87),
+          displaySmall: TextStyle(color: Colors.black87),
+          headlineLarge: TextStyle(color: Colors.black87),
+          headlineMedium: TextStyle(color: Colors.black87),
+          headlineSmall: TextStyle(color: Colors.black87),
+          titleLarge: TextStyle(color: Colors.black87),
+          titleMedium: TextStyle(color: Colors.black87),
+          titleSmall: TextStyle(color: Colors.black87),
+          bodyLarge: TextStyle(color: Colors.black87),
+          bodyMedium: TextStyle(color: Colors.black87),
+          bodySmall: TextStyle(color: Colors.black87),
+        ),
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.teal,
+        ).copyWith(brightness: Brightness.light),
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
@@ -114,12 +138,55 @@ class _VocalCanvasAppState extends State<VocalCanvasApp> {
             foregroundColor: Colors.white,
           ),
         ),
+        textTheme: TextTheme(
+          displayLarge: TextStyle(color: Colors.white),
+          displayMedium: TextStyle(color: Colors.white),
+          displaySmall: TextStyle(color: Colors.white),
+          headlineLarge: TextStyle(color: Colors.white),
+          headlineMedium: TextStyle(color: Colors.white),
+          headlineSmall: TextStyle(color: Colors.white),
+          titleLarge: TextStyle(color: Colors.white),
+          titleMedium: TextStyle(color: Colors.white),
+          titleSmall: TextStyle(color: Colors.white),
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white),
+          bodySmall: TextStyle(color: Colors.white70),
+        ),
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.teal,
+        ).copyWith(brightness: Brightness.dark),
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/auth',
+      // Use an auth gate as the home so reloads always reflect current auth state
+      home: const AuthGate(),
       routes: {
-        '/auth': (context) => AuthPage(onThemeToggle: _toggleTheme),
+        '/auth': (context) => AuthPage(),
         '/home': (context) => const VocalCanvasHomePage(),
+      },
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final user = snapshot.data;
+        if (user == null) {
+          return AuthPage();
+        } else {
+          return const VocalCanvasHomePage();
+        }
       },
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'dart:math';
 
@@ -69,8 +70,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF0EBE3),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           // Header
@@ -78,19 +80,28 @@ class _ExploreScreenState extends State<ExploreScreen> {
             padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
             child: Row(
               children: [
-                const Text(
-                  'Explore',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Serif',
-                    color: Color(0xFF002924),
-                  ),
+                Text(
+                  'explore'.tr(),
+                  style:
+                      theme.textTheme.headlineLarge?.copyWith(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Serif',
+                      ) ??
+                      const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Serif',
+                      ),
                 ),
                 const Spacer(),
                 IconButton(
                   onPressed: _refreshPosts,
-                  icon: const Icon(Icons.refresh, color: Color(0xFF002924)),
+                  icon: Icon(
+                    Icons.refresh,
+                    color:
+                        theme.iconTheme.color ?? theme.colorScheme.onBackground,
+                  ),
                 ),
               ],
             ),
@@ -100,9 +111,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           Expanded(
             child:
                 _isLoading
-                    ? const Center(
+                    ? Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFF002924),
+                        color: theme.colorScheme.primary,
                       ),
                     )
                     : _error != null

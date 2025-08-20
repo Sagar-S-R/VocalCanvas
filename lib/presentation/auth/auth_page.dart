@@ -11,9 +11,7 @@ import 'package:easy_localization/easy_localization.dart';
 import '../settings/settings_screen.dart';
 
 class AuthPage extends StatefulWidget {
-  final Function(bool) onThemeToggle;
-
-  const AuthPage({super.key, required this.onThemeToggle});
+  const AuthPage({super.key});
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -42,9 +40,11 @@ class _AuthPageState extends State<AuthPage>
   bool _showOtpField = false;
 
   // Colors
-  final Color primaryColor = const Color(0xFF002924);
-  final Color backgroundColor = const Color(0xFFF5F5DC);
-  final Color accentColor = const Color(0xFFD2B48C);
+  // Theme-aware colors will be used inside build via Theme.of(context)
+
+  // Provide convenient getters that use the current BuildContext
+  Color get primaryColor => Theme.of(context).primaryColor;
+  Color get backgroundColor => Theme.of(context).scaffoldBackgroundColor;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -76,6 +76,9 @@ class _AuthPageState extends State<AuthPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+    final backgroundColor = theme.scaffoldBackgroundColor;
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -89,11 +92,7 @@ class _AuthPageState extends State<AuthPage>
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder:
-                      (_) =>
-                          SettingsScreen(onThemeToggle: widget.onThemeToggle),
-                ),
+                MaterialPageRoute(builder: (_) => SettingsScreen()),
               );
             },
           ),
@@ -134,20 +133,20 @@ class _AuthPageState extends State<AuthPage>
           width: 90,
           height: 90,
           decoration: BoxDecoration(
-            color: const Color(0xFF002924),
+            color: Theme.of(context).primaryColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF002924).withOpacity(0.2),
+                color: Theme.of(context).primaryColor.withOpacity(0.2),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
             ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.mic_rounded,
             size: 45,
-            color: Color(0xFFF5F5DC),
+            color: Theme.of(context).scaffoldBackgroundColor,
           ),
         ),
         const SizedBox(height: 16),
@@ -156,7 +155,9 @@ class _AuthPageState extends State<AuthPage>
           style: GoogleFonts.inter(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: primaryColor,
+            color:
+                Theme.of(context).textTheme.titleLarge?.color ??
+                Theme.of(context).colorScheme.onBackground,
           ),
         ),
         const SizedBox(height: 8),
@@ -164,7 +165,11 @@ class _AuthPageState extends State<AuthPage>
           'Your Voice, Your Story',
           style: GoogleFonts.inter(
             fontSize: 16,
-            color: primaryColor.withOpacity(0.8),
+            color:
+                Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.color?.withOpacity(0.8) ??
+                Theme.of(context).colorScheme.onBackground.withOpacity(0.8),
           ),
         ),
       ],
@@ -181,7 +186,9 @@ class _AuthPageState extends State<AuthPage>
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: primaryColor,
+              color:
+                  Theme.of(context).textTheme.titleMedium?.color ??
+                  Theme.of(context).colorScheme.onBackground,
             ),
           ),
           Row(
@@ -214,7 +221,9 @@ class _AuthPageState extends State<AuthPage>
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: primaryColor,
+              color:
+                  Theme.of(context).textTheme.titleLarge?.color ??
+                  Theme.of(context).colorScheme.onBackground,
             ),
           ),
           const SizedBox(height: 16),
@@ -280,7 +289,9 @@ class _AuthPageState extends State<AuthPage>
             style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: primaryColor,
+              color:
+                  Theme.of(context).textTheme.titleLarge?.color ??
+                  Theme.of(context).colorScheme.onBackground,
             ),
           ),
           const SizedBox(height: 24),
@@ -334,20 +345,31 @@ class _AuthPageState extends State<AuthPage>
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: GoogleFonts.inter(color: primaryColor),
+      style: GoogleFonts.inter(
+        color:
+            Theme.of(context).textTheme.bodyMedium?.color ??
+            Theme.of(context).colorScheme.onBackground,
+      ),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.inter(color: primaryColor.withOpacity(0.7)),
-        prefixIcon: Icon(icon, color: primaryColor),
+        labelStyle: GoogleFonts.inter(
+          color:
+              Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ??
+              Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+        ),
+        prefixIcon: Icon(icon, color: Theme.of(context).iconTheme.color),
         filled: true,
-        fillColor: primaryColor.withOpacity(0.05),
+        fillColor: Theme.of(context).cardColor.withOpacity(0.04),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF002924), width: 1.5),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 1.5,
+          ),
         ),
       ),
     );
@@ -424,18 +446,32 @@ class _AuthPageState extends State<AuthPage>
       children: [
         Row(
           children: [
-            Expanded(child: Divider(color: primaryColor.withOpacity(0.2))),
+            Expanded(
+              child: Divider(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'OR',
                 style: GoogleFonts.inter(
-                  color: primaryColor.withOpacity(0.7),
+                  color:
+                      Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withOpacity(0.7) ??
+                      Theme.of(
+                        context,
+                      ).colorScheme.onBackground.withOpacity(0.7),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            Expanded(child: Divider(color: primaryColor.withOpacity(0.2))),
+            Expanded(
+              child: Divider(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -449,9 +485,9 @@ class _AuthPageState extends State<AuthPage>
         const SizedBox(height: 16),
         _buildSocialButton(
           label: 'Continue with Phone',
-          icon: const Icon(
+          icon: Icon(
             Icons.phone_android_rounded,
-            color: Color(0xFF002924),
+            color: Theme.of(context).iconTheme.color,
           ),
           onPressed: _isLoading ? null : _showPhoneAuthDialog,
         ),
@@ -472,7 +508,9 @@ class _AuthPageState extends State<AuthPage>
         label: Text(
           label,
           style: GoogleFonts.inter(
-            color: primaryColor,
+            color:
+                Theme.of(context).textTheme.bodyMedium?.color ??
+                Theme.of(context).colorScheme.onBackground,
             fontWeight: FontWeight.w600,
           ),
         ),

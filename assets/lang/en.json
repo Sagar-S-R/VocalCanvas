@@ -24,4 +24,11 @@
   "please_generate_content_first": "Please generate content first.",
   "microphone_permission_required": "Microphone permission is required.",
   "browse_by_category": "Browse by Category"
+  ,
+  "exhibition_title": "The Sunday Exhibition",
+  "exhibition_subtitle": "Celebrating the most inspiring creators of the week.",
+  "weekly_leaderboard": "Weekly Leaderboard",
+  "badge_trending_creator": "Trending Creator",
+  "badge_storyteller": "Storyteller",
+  "badge_community_choice": "Community Choice"
 }

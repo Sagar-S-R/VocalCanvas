@@ -24,4 +24,11 @@
   "please_generate_content_first": "पहले कंटेंट बनाएं।",
   "microphone_permission_required": "माइक्रोफोन अनुमति आवश्यक है।",
   "browse_by_category": "श्रेणी के अनुसार ब्राउज़ करें"
+  ,
+  "exhibition_title": "संडे प्रदर्शनी",
+  "exhibition_subtitle": "सप्ताह के सबसे प्रेरणादायक रचनाकारों का जश्न",
+  "weekly_leaderboard": "साप्ताहिक लीडरबोर्ड",
+  "badge_trending_creator": "ट्रेंडिंग क्रिएटर",
+  "badge_storyteller": "कहानीकार",
+  "badge_community_choice": "कम्युनिटी चॉइस"
 }

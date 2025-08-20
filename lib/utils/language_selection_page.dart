@@ -4,17 +4,13 @@ import 'package:easy_localization/easy_localization.dart';
 import '../presentation/auth/auth_page.dart';
 
 class LanguageSelectionPage extends StatelessWidget {
-  final Function(bool) onThemeToggle;
-  const LanguageSelectionPage({super.key, required this.onThemeToggle});
+  const LanguageSelectionPage({super.key});
 
   Future<void> _setLanguage(BuildContext context, Locale locale) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('languageCode', locale.languageCode);
     context.setLocale(locale);
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => AuthPage(onThemeToggle: onThemeToggle)),
-    );
+    Navigator.pushReplacementNamed(context, '/auth');
   }
 
   @override
@@ -33,6 +29,10 @@ class LanguageSelectionPage extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _setLanguage(context, Locale('hi')),
               child: const Text("हिंदी"),
+            ),
+            ElevatedButton(
+              onPressed: () => _setLanguage(context, Locale('kn')),
+              child: const Text("ಕನ್ನಡ"),
             ),
           ],
         ),

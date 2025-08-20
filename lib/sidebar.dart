@@ -27,7 +27,9 @@ class _SidebarState extends State<Sidebar> {
         duration: Duration(milliseconds: 200),
         width: _isHovered ? 180 : 60,
         decoration: BoxDecoration(
-          color: const Color(0xFF12101D),
+          color:
+              Theme.of(context).appBarTheme.backgroundColor ??
+              Theme.of(context).primaryColor,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -40,13 +42,23 @@ class _SidebarState extends State<Sidebar> {
                       child: Row(
                         children: [
                           SizedBox(width: 16),
-                          Icon(item.icon, color: Colors.white, size: 28),
+                          Icon(
+                            item.icon,
+                            color:
+                                Theme.of(context).iconTheme.color ??
+                                Colors.white,
+                            size: 28,
+                          ),
                           if (_isHovered) ...[
                             SizedBox(width: 16),
                             Text(
                               item.label,
                               style: TextStyle(
-                                color: Colors.white,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color ??
+                                    Colors.white,
                                 fontSize: 18,
                               ),
                             ),

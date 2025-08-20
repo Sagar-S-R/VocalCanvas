@@ -35,41 +35,70 @@ class HomeFeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF0EBE3),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: Container(
           constraints: const BoxConstraints(
             maxWidth: 600,
           ), // Constrain width like Instagram
-          child: StreamBuilder<List<Post>>(
-            stream: _postService.getPostsStream(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Color(0xFF002924)),
-                );
-              }
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No posts to show.'));
-              }
-
-              final posts = snapshot.data!;
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 40.0),
-                itemCount: posts.length,
-                itemBuilder: (context, index) {
-                  final post = posts[index];
-                  return PostCard(
-                    post: post,
-                    onTap: () => _showPostDetails(context, post),
+          child: Column(
+            children: [
+              // Debug: show how many posts Firestore returns for diagnosis
+              FutureBuilder<List<Post>>(
+                future: _postService.getAllPosts(),
+                builder: (context, countSnapshot) {
+                  if (countSnapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const SizedBox.shrink();
+                  }
+                  final total = countSnapshot.data?.length ?? 0;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'DB posts: $total',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                    ),
                   );
                 },
-              );
-            },
+              ),
+              Expanded(
+                child: StreamBuilder<List<Post>>(
+                  stream: _postService.getPostsStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: theme.colorScheme.primary,
+                        ),
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(child: Text('No posts to show.'));
+                    }
+
+                    final posts = snapshot.data!;
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 40.0),
+                      itemCount: posts.length,
+                      itemBuilder: (context, index) {
+                        final post = posts[index];
+                        return PostCard(
+                          post: post,
+                          onTap: () => _showPostDetails(context, post),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -101,6 +130,7 @@ class PostDetailOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Scaffold(
@@ -115,7 +145,7 @@ class PostDetailOverlay extends StatelessWidget {
                 margin: const EdgeInsets.all(40),
                 constraints: const BoxConstraints(maxWidth: 800),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0EBE3),
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -153,11 +183,15 @@ class PostDetailOverlay extends StatelessWidget {
                           children: [
                             Text(
                               post.title,
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF002924),
-                              ),
+                              style:
+                                  theme.textTheme.titleLarge?.copyWith(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ) ??
+                                  const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             if (post.location?.isNotEmpty == true)
@@ -175,11 +209,15 @@ class PostDetailOverlay extends StatelessWidget {
                               child: SingleChildScrollView(
                                 child: Text(
                                   post.content,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    height: 1.5,
-                                    color: Color(0xFF002924),
-                                  ),
+                                  style:
+                                      theme.textTheme.bodyLarge?.copyWith(
+                                        fontSize: 16,
+                                        height: 1.5,
+                                      ) ??
+                                      const TextStyle(
+                                        fontSize: 16,
+                                        height: 1.5,
+                                      ),
                                 ),
                               ),
                             ),
@@ -242,8 +280,9 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF0EBE3),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: <Widget>[
           // Main content area, with padding on the left to avoid the collapsed sidebar
@@ -264,8 +303,10 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                         ),
                       );
                     },
-                    backgroundColor: const Color(0xFF002924),
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor:
+                        theme.floatingActionButtonTheme.foregroundColor ??
+                        Colors.white,
                     elevation: 8.0,
                     tooltip: 'create_post'.tr(),
                     child: const Icon(Icons.add, size: 36),
@@ -305,14 +346,14 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
               curve: Curves.easeInOut,
               width: _isRailExtended ? 250 : 72, // Animate width change
               decoration: BoxDecoration(
-                color: const Color(0xFF002924),
+                color: theme.colorScheme.primary,
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: theme.shadowColor.withOpacity(0.2),
                     blurRadius: 20,
                     offset: const Offset(5, 0),
                   ),
@@ -377,7 +418,7 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.white.withOpacity(0.1) : Colors.transparent,
+        color: isSelected ? Colors.white.withOpacity(0.08) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ClipRRect(

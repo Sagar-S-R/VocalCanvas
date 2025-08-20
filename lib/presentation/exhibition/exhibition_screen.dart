@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 // A simple data model for a leaderboard entry.
 class Artisan {
@@ -46,38 +47,57 @@ class ExhibitionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final width = MediaQuery.of(context).size.width;
+    final horizontalPadding = width > 800 ? 80.0 : 24.0;
     return Scaffold(
-      backgroundColor: const Color(0xFFF0EBE3),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 50.0),
+        padding: EdgeInsets.symmetric(
+          vertical: 40.0,
+          horizontal: horizontalPadding,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'The Sunday Exhibition',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Lora',
+            // Responsive title: allow it to wrap/scale to avoid overflow
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 900),
+              child: FittedBox(
+                alignment: Alignment.centerLeft,
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'exhibition_title'.tr(),
+                  style: TextStyle(
+                    color: theme.textTheme.headlineLarge?.color ?? Colors.black,
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Lora',
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Celebrating the most inspiring creators of the week.',
-              style: TextStyle(color: Colors.black54, fontSize: 20),
+            Text(
+              'exhibition_subtitle'.tr(),
+              style: TextStyle(
+                color:
+                    theme.textTheme.bodyMedium?.color?.withOpacity(0.8) ??
+                    Colors.black54,
+                fontSize: 20,
+              ),
             ),
             const SizedBox(height: 40),
 
             // Leaderboard Section
-            _buildSectionHeader('Weekly Leaderboard'),
+            _buildSectionHeader(context, 'weekly_leaderboard'.tr()),
             const SizedBox(height: 20),
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: topArtisans.length,
               itemBuilder: (context, index) {
-                return _buildLeaderboardTile(topArtisans[index]);
+                return _buildLeaderboardTile(context, topArtisans[index]);
               },
             ),
           ],
@@ -87,11 +107,15 @@ class ExhibitionScreen extends StatelessWidget {
   }
 
   // Helper for section headers
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final theme = Theme.of(context);
     return Text(
       title,
-      style: const TextStyle(
-        color: Colors.black87,
+      style: TextStyle(
+        color:
+            theme.textTheme.titleMedium?.color ??
+            theme.textTheme.bodyLarge?.color ??
+            Colors.black87,
         fontSize: 24,
         fontWeight: FontWeight.bold,
         fontFamily: 'Lora',
@@ -100,11 +124,12 @@ class ExhibitionScreen extends StatelessWidget {
   }
 
   // Helper for the leaderboard list tiles
-  Widget _buildLeaderboardTile(Artisan artisan) {
+  Widget _buildLeaderboardTile(BuildContext context, Artisan artisan) {
+    final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
       elevation: 0,
-      color: Colors.white,
+      color: theme.cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -113,7 +138,7 @@ class ExhibitionScreen extends StatelessWidget {
             Text(
               '#${artisan.rank}',
               style: TextStyle(
-                color: Colors.deepPurple.shade300,
+                color: theme.colorScheme.secondary,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -129,15 +154,19 @@ class ExhibitionScreen extends StatelessWidget {
               children: [
                 Text(
                   artisan.name,
-                  style: const TextStyle(
-                    color: Colors.black,
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color ?? Colors.black,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   artisan.craft,
-                  style: const TextStyle(color: Colors.black54),
+                  style: TextStyle(
+                    color:
+                        theme.textTheme.bodyMedium?.color?.withOpacity(0.8) ??
+                        Colors.black54,
+                  ),
                 ),
               ],
             ),
@@ -146,7 +175,7 @@ class ExhibitionScreen extends StatelessWidget {
               Row(
                 children:
                     artisan.badges
-                        .map((badge) => _buildBadgeChip(badge))
+                        .map((badge) => _buildBadgeChip(context, badge))
                         .toList(),
               ),
           ],
@@ -156,18 +185,19 @@ class ExhibitionScreen extends StatelessWidget {
   }
 
   // Helper for the badge chips
-  Widget _buildBadgeChip(String label) {
+  Widget _buildBadgeChip(BuildContext context, String label) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(left: 8.0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.deepPurple.withOpacity(0.1),
+        color: theme.colorScheme.secondary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: Colors.deepPurple.shade800,
+          color: theme.colorScheme.secondary,
           fontWeight: FontWeight.bold,
           fontSize: 12,
         ),

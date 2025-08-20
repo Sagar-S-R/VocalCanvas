@@ -110,14 +110,15 @@ class _CreateScreenState extends State<CreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('create_new_post'.tr()),
-        backgroundColor: const Color(0xFFF0EBE3),
+        backgroundColor: theme.appBarTheme.backgroundColor,
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: theme.appBarTheme.foregroundColor,
       ),
-      backgroundColor: const Color(0xFFF0EBE3),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: SingleChildScrollView(
           child: Padding(
@@ -197,14 +198,17 @@ class _CreateScreenState extends State<CreateScreen> {
                                           fit: BoxFit.cover,
                                         ))
                                     : Container(
-                                      decoration: const BoxDecoration(
+                                      decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                           colors: [
-                                            Color(0xFF1A237E),
-                                            Color(0xFF3949AB),
-                                            Color(0xFF5C6BC0),
+                                            theme.colorScheme.primary
+                                                .withOpacity(0.8),
+                                            theme.colorScheme.primary
+                                                .withOpacity(0.6),
+                                            theme.colorScheme.primary
+                                                .withOpacity(0.4),
                                           ],
                                         ),
                                       ),
@@ -219,8 +223,8 @@ class _CreateScreenState extends State<CreateScreen> {
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    Colors.black.withOpacity(0.3),
-                                    Colors.black.withOpacity(0.7),
+                                    Colors.black.withOpacity(0.25),
+                                    Colors.black.withOpacity(0.6),
                                   ],
                                 ),
                               ),
@@ -243,20 +247,32 @@ class _CreateScreenState extends State<CreateScreen> {
                                         vertical: 8,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
+                                        color: theme.scaffoldBackgroundColor
+                                            .withOpacity(0.08),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: Colors.white.withOpacity(0.3),
+                                          color: theme.scaffoldBackgroundColor
+                                              .withOpacity(0.12),
                                           width: 1,
                                         ),
                                       ),
                                       child: Text(
                                         _location,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                        style:
+                                            theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  color:
+                                                      theme
+                                                          .colorScheme
+                                                          .onBackground,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ) ??
+                                            const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                       ),
                                     ),
 
@@ -270,12 +286,22 @@ class _CreateScreenState extends State<CreateScreen> {
                                       ),
                                       child: Text(
                                         _caption,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          height: 1.4,
-                                          fontWeight: FontWeight.w400,
-                                        ),
+                                        style:
+                                            theme.textTheme.bodyLarge?.copyWith(
+                                              color:
+                                                  theme
+                                                      .colorScheme
+                                                      .onBackground,
+                                              fontSize: 16,
+                                              height: 1.4,
+                                              fontWeight: FontWeight.w400,
+                                            ) ??
+                                            const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              height: 1.4,
+                                              fontWeight: FontWeight.w400,
+                                            ),
                                         maxLines: 3,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -286,12 +312,19 @@ class _CreateScreenState extends State<CreateScreen> {
                                   // Title
                                   Text(
                                     _title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      height: 1.1,
-                                    ),
+                                    style:
+                                        theme.textTheme.headlineLarge?.copyWith(
+                                          color: theme.colorScheme.onBackground,
+                                          fontSize: 36,
+                                          fontWeight: FontWeight.bold,
+                                          height: 1.1,
+                                        ) ??
+                                        const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 36,
+                                          fontWeight: FontWeight.bold,
+                                          height: 1.1,
+                                        ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),

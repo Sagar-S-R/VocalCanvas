@@ -1,15 +1,22 @@
 // SettingsScreen
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import '../auth/auth_page.dart';
+
+import 'package:provider/provider.dart';
+import '../../utils/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
-  final Function(bool)? onThemeToggle;
-
-  const SettingsScreen({super.key, this.onThemeToggle});
+  const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDark;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -25,11 +32,12 @@ class SettingsScreen extends StatelessWidget {
           // Language Section
           Text(
             "language".tr(),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
-            ),
+            style:
+                Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ) ??
+                const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Card(
@@ -38,7 +46,11 @@ class SettingsScreen extends StatelessWidget {
               leading: const Icon(Icons.language),
               title: Text("choose_language".tr()),
               subtitle: Text(
-                context.locale.languageCode == 'en' ? 'English' : 'हिन्दी',
+                context.locale.languageCode == 'en'
+                    ? 'English'
+                    : context.locale.languageCode == 'hi'
+                    ? 'हिन्दी'
+                    : 'ಕನ್ನಡ',
               ),
               onTap: () => _showLanguageDialog(context),
             ),
@@ -63,7 +75,9 @@ class SettingsScreen extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.logout),
                   title: const Text('Logout'),
-                  onTap: () {},
+                  onTap: () async {
+                    await _handleLogout(context);
+                  },
                 ),
               ],
             ),
@@ -73,11 +87,12 @@ class SettingsScreen extends StatelessWidget {
           // Theme Section
           Text(
             "dark_mode".tr(),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
-            ),
+            style:
+                Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ) ??
+                const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Card(
@@ -88,7 +103,9 @@ class SettingsScreen extends StatelessWidget {
                 isDarkMode ? 'Dark theme enabled' : 'Light theme enabled',
               ),
               value: isDarkMode,
-              onChanged: onThemeToggle,
+              onChanged: (val) {
+                themeProvider.setDarkMode(val);
+              },
               secondary: Icon(isDarkMode ? Icons.dark_mode : Icons.light_mode),
             ),
           ),
@@ -157,6 +174,23 @@ class SettingsScreen extends StatelessWidget {
                   Navigator.of(context).pop();
                 },
               ),
+              ListTile(
+                title: const Text('ಕನ್ನಡ'),
+                leading: Radio<String>(
+                  value: 'kn',
+                  groupValue: context.locale.languageCode,
+                  onChanged: (String? value) {
+                    if (value != null) {
+                      context.setLocale(const Locale('kn'));
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+                onTap: () {
+                  context.setLocale(const Locale('kn'));
+                  Navigator.of(context).pop();
+                },
+              ),
             ],
           ),
           actions: [
@@ -168,5 +202,41 @@ class SettingsScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    try {
+      // Sign out from Firebase
+      await FirebaseAuth.instance.signOut();
+
+      // Also sign out from Google (if used) to clear web/browser Google session
+      try {
+        final googleSignIn = GoogleSignIn();
+        await googleSignIn.signOut();
+        // On some platforms disconnecting helps fully remove the account grant
+        try {
+          await googleSignIn.disconnect();
+        } catch (_) {}
+      } catch (_) {}
+
+      // On web try to reduce persistence so a reload doesn't restore auth silently
+      if (kIsWeb) {
+        try {
+          await FirebaseAuth.instance.setPersistence(Persistence.NONE);
+        } catch (_) {}
+      }
+
+      // Clear saved language preference (optional)
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('languageCode');
+
+      // Navigate to AuthPage and remove all previous routes
+      Navigator.of(context).pushNamedAndRemoveUntil('/auth', (route) => false);
+    } catch (e) {
+      // If sign-out failed, show a simple error snackbar
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error signing out: $e')));
+    }
   }
 }
