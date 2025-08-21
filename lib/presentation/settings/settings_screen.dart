@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import '../auth/auth_page.dart';
+// ...existing code...
 
 import 'package:provider/provider.dart';
 import '../../utils/theme_provider.dart';

@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:easy_localization/easy_localization.dart';
+// ...existing code...
 import '../settings/settings_screen.dart';
 
 class AuthPage extends StatefulWidget {
@@ -82,7 +82,7 @@ class _AuthPageState extends State<AuthPage>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text("welcome".tr()),
+        title: Text("Welcome"),
         backgroundColor: backgroundColor,
         elevation: 0,
         foregroundColor: primaryColor,
