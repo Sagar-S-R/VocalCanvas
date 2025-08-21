@@ -89,9 +89,15 @@ class ExplorePostCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Caption
+                    // Multilingual Content
                     Text(
-                      post.content, // Using content as caption for now
+                      (() {
+                        String langCode =
+                            Localizations.localeOf(context).languageCode;
+                        if (langCode == 'hi') return post.content_hi;
+                        if (langCode == 'kn') return post.content_kn;
+                        return post.content_en;
+                      })(),
                       style: TextStyle(
                         fontSize: 14,
                         color:

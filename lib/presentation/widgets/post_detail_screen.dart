@@ -150,7 +150,15 @@ class PostDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _getFormattedDescription(post.content),
+                      _getFormattedDescription(
+                        (() {
+                          String langCode =
+                              Localizations.localeOf(context).languageCode;
+                          if (langCode == 'hi') return post.content_hi;
+                          if (langCode == 'kn') return post.content_kn;
+                          return post.content_en;
+                        })(),
+                      ),
                       style: TextStyle(
                         color:
                             theme.textTheme.bodyLarge?.color?.withOpacity(
@@ -158,8 +166,10 @@ class PostDetailScreen extends StatelessWidget {
                             ) ??
                             Colors.white70,
                         fontSize: 16,
-                        height: 1.6,
+                        height: 1.5,
+                        fontWeight: FontWeight.w400,
                       ),
+                      textAlign: TextAlign.justify,
                     ),
 
                     const SizedBox(height: 30),

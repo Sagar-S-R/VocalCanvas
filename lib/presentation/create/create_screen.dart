@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
 import 'widgets/voice_recorder_widget.dart'; // Import the voice recorder widget
 import '../../core/services/post_service.dart';
 
@@ -24,6 +27,71 @@ class _CreateScreenState extends State<CreateScreen> {
   Uint8List? _audioBytes;
   bool _isUploading = false;
   bool _isGenerating = false;
+
+  Future<String> _translateText(String text, String targetLanguage) async {
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    if (apiKey.isEmpty) {
+      // Fallback to simple prefixed text if no API key
+      if (targetLanguage == 'Hindi') {
+        return 'हिंदी: $text';
+      } else if (targetLanguage == 'Kannada') {
+        return 'ಕನ್ನಡ: $text';
+      }
+      return text;
+    }
+
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey',
+    );
+    final headers = {'Content-Type': 'application/json'};
+
+    final body = jsonEncode({
+      "contents": [
+        {
+          "parts": [
+            {"text": "Translate the following text to ${targetLanguage == 'Kannada' ? 'Kannada (ಕನ್ನಡ)' : targetLanguage}, maintaining the same tone and meaning. Only return the translated text without any additional formatting or explanation: $text"}
+          ]
+        }
+      ]
+    });
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        String translatedText = responseBody['candidates'][0]['content']['parts'][0]['text'];
+        
+        // Debug: Print what we're getting back
+        print('Translation for $targetLanguage: $translatedText');
+        
+        // Clean any markdown formatting
+        translatedText = translatedText.trim();
+        if (translatedText.startsWith('```') || translatedText.endsWith('```')) {
+          translatedText = translatedText.replaceAll('```', '').trim();
+        }
+        
+        return translatedText;
+      } else {
+        print('Translation API error for $targetLanguage: ${response.body}');
+        // Fallback on API error
+        if (targetLanguage == 'Hindi') {
+          return 'हिंदी: $text';
+        } else if (targetLanguage == 'Kannada') {
+          return 'ಕನ್ನಡ: $text';
+        }
+        return text;
+      }
+    } catch (e) {
+      print('Translation error for $targetLanguage: $e');
+      // Fallback on network error
+      if (targetLanguage == 'Hindi') {
+        return 'हिंदी: $text';
+      } else if (targetLanguage == 'Kannada') {
+        return 'ಕನ್ನಡ: $text';
+      }
+      return text;
+    }
+  }
 
   void _onGenerationComplete(
     String content,
@@ -75,8 +143,21 @@ class _CreateScreenState extends State<CreateScreen> {
     });
 
     try {
+      // Generate translations
+      String content_en = _content;
+      String content_hi = await _translateText(_content, 'Hindi');
+      String content_kn = await _translateText(_content, 'Kannada');
+
+      // Debug: Print what we're about to save
+      print('Saving post with:');
+      print('English: $content_en');
+      print('Hindi: $content_hi');
+      print('Kannada: $content_kn');
+
       await _postService.createPost(
-        content: _content,
+        content_en: content_en,
+        content_hi: content_hi,
+        content_kn: content_kn,
         title: _title,
         location: _location,
         caption: _caption,

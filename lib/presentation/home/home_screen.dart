@@ -208,7 +208,17 @@ class PostDetailOverlay extends StatelessWidget {
                             Expanded(
                               child: SingleChildScrollView(
                                 child: Text(
-                                  post.content,
+                                  (() {
+                                    String langCode =
+                                        Localizations.localeOf(
+                                          context,
+                                        ).languageCode;
+                                    if (langCode == 'hi')
+                                      return post.content_hi;
+                                    if (langCode == 'kn')
+                                      return post.content_kn;
+                                    return post.content_en;
+                                  })(),
                                   style:
                                       theme.textTheme.bodyLarge?.copyWith(
                                         fontSize: 16,

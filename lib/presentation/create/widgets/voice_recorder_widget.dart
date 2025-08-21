@@ -45,7 +45,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
     super.initState();
     _initSpeechToText();
 
-    _apiKey = dotenv.env['GROQ_API_KEY'] ?? '';
+    _apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
   }
 
   void _initSpeechToText() async {
@@ -61,13 +61,46 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
     super.dispose();
   }
 
-  Future<void> _generatePostWithGroq(String transcription) async {
+  Future<String> _translateText(String text, String targetLanguage) async {
+    if (_apiKey.isEmpty) {
+      return 'Translation requires API key';
+    }
+
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$_apiKey',
+    );
+    final headers = {'Content-Type': 'application/json'};
+
+    final body = jsonEncode({
+      "contents": [
+        {
+          "parts": [
+            {"text": "Translate the following text to $targetLanguage: $text"}
+          ]
+        }
+      ]
+    });
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        return responseBody['candidates'][0]['content']['parts'][0]['text'];
+      } else {
+        return 'Translation failed';
+      }
+    } catch (e) {
+      return 'Translation failed';
+    }
+  }
+
+  Future<void> _generatePostWithGemini(String transcription) async {
     if (_apiKey.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Groq API key is missing. Please add it to your .env file.',
+              'Gemini API key is missing. Please add it to your .env file.',
             ),
           ),
         );
@@ -75,24 +108,22 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       return;
     }
 
-    final url = Uri.parse('https://api.groq.com/openai/v1/chat/completions');
-    final headers = {
-      'Authorization': 'Bearer $_apiKey',
-      'Content-Type': 'application/json',
-    };
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$_apiKey',
+    );
+    final headers = {'Content-Type': 'application/json'};
 
     final body = jsonEncode({
-      "model": "llama3-8b-8192",
-      "messages": [
+      "contents": [
         {
-          "role": "system",
-          "content":
-              "You are an AI assistant that creates user bios from voice descriptions. The user is registering as an ${widget.aiRole}. Analyze the transcription and create a beautiful bio for an ${widget.aiRole}. Return a JSON object with: {\"title\": \"<1-2 words catchy title like 'Mosaic Artist', 'Art Admirer', etc.>\", \"location\": \"<inferred or mentioned location, or 'Unknown'>\", \"hashtags\": [\"#art\", \"#creative\", \"#inspiration\"], \"content\": \"<A poetic 3-4 sentence bio that captures emotion and story. Make it inspiring and artistic, like describing a creative person or admirer.>\", \"caption\": \"<A short inspirational quote or caption about art/creativity>\"}. Focus on making content that sounds like describing a beautiful person or creative admirer.",
+          "parts": [
+            {
+              "text":
+                  "You are an AI assistant that creates user bios from voice descriptions. The user is registering as an ${widget.aiRole}. Analyze the transcription and create a beautiful bio for an ${widget.aiRole}. Return a JSON object with: {\"title\": \"<1-2 words catchy title like 'Mosaic Artist', 'Art Admirer', etc.>\", \"location\": \"<inferred or mentioned location, or 'Unknown'>\", \"hashtags\": [\"#art\", \"#creative\", \"#inspiration\"], \"content\": \"<A poetic 3-4 sentence bio that captures emotion and story. Make it inspiring and artistic, like describing a creative person or admirer.>\", \"caption\": \"<A short inspirational quote or caption about art/creativity>\"}. Focus on making content that sounds like describing a beautiful person or creative admirer. User's transcription: $transcription",
+            },
+          ],
         },
-        {"role": "user", "content": transcription},
       ],
-      "temperature": 0.8,
-      "response_format": {"type": "json_object"},
     });
 
     try {
@@ -100,7 +131,17 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       if (mounted) {
         if (response.statusCode == 200) {
           final responseBody = jsonDecode(response.body);
-          final contentJson = responseBody['choices'][0]['message']['content'];
+          String contentJson =
+              responseBody['candidates'][0]['content']['parts'][0]['text'];
+
+          // Clean the JSON string from markdown and other text
+          final jsonStart = contentJson.indexOf('{');
+          final jsonEnd = contentJson.lastIndexOf('}');
+
+          if (jsonStart != -1 && jsonEnd != -1) {
+            contentJson = contentJson.substring(jsonStart, jsonEnd + 1);
+          }
+
           final extractedData = jsonDecode(contentJson);
 
           widget.onGenerationComplete(
@@ -175,7 +216,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
           });
         }
 
-        await _generatePostWithGroq(_transcribedText);
+        await _generatePostWithGemini(_transcribedText);
 
         if (mounted) {
           setState(() {

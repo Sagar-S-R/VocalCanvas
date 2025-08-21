@@ -4,7 +4,9 @@ class Post {
   final String id;
   final String userId;
   final String title;
-  final String content;
+  final String content_en;
+  final String content_hi;
+  final String content_kn;
   final String? caption; // Added caption
   final String? imageUrl;
   final String? audioUrl;
@@ -18,7 +20,9 @@ class Post {
     required this.id,
     required this.userId,
     required this.title,
-    required this.content,
+    required this.content_en,
+    required this.content_hi,
+    required this.content_kn,
     this.caption, // Added caption
     this.imageUrl,
     this.audioUrl,
@@ -52,8 +56,10 @@ class Post {
       id: doc.id,
       userId: data['userId'] ?? '',
       title: data['title'] ?? '',
-      content: data['content'] ?? '',
-      caption: data['caption'], // Added caption
+      content_en: data['content_en'] ?? '',
+      content_hi: data['content_hi'] ?? '',
+      content_kn: data['content_kn'] ?? '',
+      caption: data['caption'],
       imageUrl: data['imageUrl'],
       audioUrl: data['audioUrl'],
       location: data['location'],
@@ -68,8 +74,10 @@ class Post {
     return {
       'userId': userId,
       'title': title,
-      'content': content,
-      'caption': caption, // Added caption
+      'content_en': content_en,
+      'content_hi': content_hi,
+      'content_kn': content_kn,
+      'caption': caption,
       'imageUrl': imageUrl,
       'audioUrl': audioUrl,
       'location': location,

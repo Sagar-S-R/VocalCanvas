@@ -12,7 +12,9 @@ class PostService {
 
   Future<void> createPost({
     required String title,
-    required String content,
+    required String content_en,
+    required String content_hi,
+    required String content_kn,
     required String userId,
     String? caption,
     String? location,
@@ -42,7 +44,9 @@ class PostService {
     final newPost = Post(
       id: '',
       title: title,
-      content: content,
+      content_en: content_en,
+      content_hi: content_hi,
+      content_kn: content_kn,
       caption: caption,
       userId: userId,
       imageUrl: imageUrl,

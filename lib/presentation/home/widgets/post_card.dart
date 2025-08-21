@@ -69,8 +69,14 @@ class _PostCardState extends State<PostCard> {
   @override
   Widget build(BuildContext context) {
     final bool isLiked = widget.post.likes.contains(_currentUserId);
-
     final theme = Theme.of(context);
+    String langCode = Localizations.localeOf(context).languageCode;
+    String postContent = widget.post.content_en;
+    if (langCode == 'hi') {
+      postContent = widget.post.content_hi;
+    } else if (langCode == 'kn') {
+      postContent = widget.post.content_kn;
+    }
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -220,10 +226,22 @@ class _PostCardState extends State<PostCard> {
                 ],
               ),
             ),
+            // Multilingual Content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
+              child: Text(
+                postContent,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
             // Caption
             if (widget.post.caption?.isNotEmpty == true)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
                 child: Text(
                   widget.post.caption!,
                   maxLines: 2,

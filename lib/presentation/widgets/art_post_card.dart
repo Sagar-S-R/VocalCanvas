@@ -106,7 +106,15 @@ class ArtPostCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         child: Text(
-                          _getShortDescription(post.content),
+                          _getShortDescription(
+                            (() {
+                              String langCode =
+                                  Localizations.localeOf(context).languageCode;
+                              if (langCode == 'hi') return post.content_hi;
+                              if (langCode == 'kn') return post.content_kn;
+                              return post.content_en;
+                            })(),
+                          ),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
