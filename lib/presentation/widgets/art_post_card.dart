@@ -177,7 +177,7 @@ class ArtPostCard extends StatelessWidget {
     if (sentences.isNotEmpty && sentences[0].length <= 150) {
       return sentences[0] + (sentences.length > 1 ? '.' : '');
     }
-    return content.length <= 150 ? content : content.substring(0, 147) + '...';
+    return content.length <= 150 ? content : '${content.substring(0, 147)}...';
   }
 }
 
