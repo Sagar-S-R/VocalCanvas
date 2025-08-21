@@ -66,8 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF0EBE3),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -76,10 +77,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 40,
-                    backgroundColor: Color(0xFF002924),
-                    child: Icon(Icons.person, size: 40, color: Colors.white),
+                    backgroundColor: theme.colorScheme.primary,
+                    child: Icon(
+                      Icons.person,
+                      size: 40,
+                      color: theme.colorScheme.onPrimary,
+                    ),
                   ),
                   const SizedBox(width: 24),
                   Expanded(
@@ -88,36 +93,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           _user?.name ?? 'Art Lover',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF002924),
-                          ),
+                          style:
+                              theme.textTheme.titleLarge?.copyWith(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ) ??
+                              const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                         const SizedBox(height: 8),
                         if (_user?.email != null)
                           Text(
                             'Email: ${_user!.email}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                            ),
+                            style: (theme.textTheme.bodyMedium ??
+                                    const TextStyle())
+                                .copyWith(
+                                  fontSize: 16,
+                                  color: (theme.textTheme.bodyMedium?.color ??
+                                          theme.colorScheme.onBackground)
+                                      .withOpacity(0.95),
+                                ),
                           ),
-                        if (_user?.bio != null)
+                        if (_user?.bio != null && _user!.bio!.isNotEmpty)
                           Text(
                             'Bio: ${_user!.bio}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                            ),
+                            style: (theme.textTheme.bodyMedium ??
+                                    const TextStyle())
+                                .copyWith(
+                                  fontSize: 16,
+                                  color: (theme.textTheme.bodyMedium?.color ??
+                                          theme.colorScheme.onBackground)
+                                      .withOpacity(0.95),
+                                ),
                           ),
-                        if (_user?.location != null)
+                        if (_user?.location != null &&
+                            _user!.location!.isNotEmpty &&
+                            _user!.location!.toLowerCase() != 'unknown')
                           Text(
                             'Location: ${_user!.location}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black54,
-                            ),
+                            style:
+                                theme.textTheme.bodyMedium?.copyWith(
+                                  fontSize: 16,
+                                  color: (theme.textTheme.bodyMedium?.color ??
+                                          theme.colorScheme.onBackground)
+                                      .withOpacity(0.85),
+                                ) ??
+                                const TextStyle(fontSize: 16),
                           ),
                         if (_user?.audioUrl != null)
                           Row(
@@ -125,7 +148,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               IconButton(
                                 icon: Icon(
                                   _isPlaying ? Icons.pause : Icons.volume_up,
-                                  color: Color(0xFF002924),
+                                  color:
+                                      theme.iconTheme.color ??
+                                      theme.colorScheme.onBackground,
                                 ),
                                 onPressed: () async {
                                   if (_isPlaying) {
@@ -134,6 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   } else {
                                     final audioUrl = _user!.audioUrl!;
                                     if (audioUrl.startsWith('data:audio')) {
+                                      // Extract base64 and play
                                       final base64Str =
                                           audioUrl.split(',').last;
                                       try {
@@ -154,7 +180,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   }
                                 },
                               ),
-                              const Text('Listen to intro'),
+                              Text(
+                                'Listen to intro',
+                                style:
+                                    theme.textTheme.bodyMedium?.copyWith(
+                                      color:
+                                          (theme.textTheme.bodyMedium?.color ??
+                                              theme.colorScheme.onBackground),
+                                    ) ??
+                                    TextStyle(
+                                      color: theme.colorScheme.onBackground
+                                          .withOpacity(0.7),
+                                    ),
+                              ),
                             ],
                           ),
                       ],
@@ -167,9 +205,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child:
                   _isLoading
-                      ? const Center(
+                      ? Center(
                         child: CircularProgressIndicator(
-                          color: Color(0xFF002924),
+                          color: theme.colorScheme.primary,
                         ),
                       )
                       : _error != null
@@ -235,8 +273,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 width: double.infinity,
                                               )
                                               : Container(
-                                                color: Colors.grey[200],
-                                                child: const Center(
+                                                color: theme.dividerColor,
+                                                child: Center(
                                                   child: Icon(
                                                     Icons.image,
                                                     color: Colors.grey,
@@ -249,11 +287,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     padding: const EdgeInsets.all(12.0),
                                     child: Text(
                                       post.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                        color: Color(0xFF002924),
-                                      ),
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: theme.colorScheme.onSurface,
+                                          ) ??
+                                          const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -264,10 +307,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                     child: Text(
                                       post.caption ?? '',
-                                      style: const TextStyle(
-                                        color: Colors.black54,
-                                        fontSize: 14,
-                                      ),
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                            color: theme.colorScheme.onSurface
+                                                .withOpacity(0.85),
+                                            fontSize: 14,
+                                          ) ??
+                                          const TextStyle(fontSize: 14),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),

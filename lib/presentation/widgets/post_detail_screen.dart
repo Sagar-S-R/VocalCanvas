@@ -8,15 +8,16 @@ class PostDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 400,
             pinned: true,
-            backgroundColor: Colors.black,
-            iconTheme: const IconThemeData(color: Colors.white),
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 children: [
@@ -26,14 +27,14 @@ class PostDetailScreen extends StatelessWidget {
                         post.imageUrl != null
                             ? Image.network(post.imageUrl!, fit: BoxFit.cover)
                             : Container(
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    Color(0xFF1A237E),
-                                    Color(0xFF3949AB),
-                                    Color(0xFF5C6BC0),
+                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primary.withOpacity(0.6),
+                                    theme.colorScheme.primary.withOpacity(0.4),
                                   ],
                                 ),
                               ),
@@ -48,7 +49,7 @@ class PostDetailScreen extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.8),
+                            Colors.black.withOpacity(0.6),
                           ],
                         ),
                       ),
@@ -72,31 +73,51 @@ class PostDetailScreen extends StatelessWidget {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: theme.scaffoldBackgroundColor.withOpacity(
+                                0.08,
+                              ),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
+                                color: theme.scaffoldBackgroundColor
+                                    .withOpacity(0.12),
                                 width: 1,
                               ),
                             ),
                             child: Text(
                               post.location!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style:
+                                  theme.textTheme.bodyMedium?.copyWith(
+                                    color:
+                                        theme.appBarTheme.foregroundColor ??
+                                        theme.colorScheme.onBackground,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ) ??
+                                  const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                             ),
                           ),
                         const SizedBox(height: 20),
                         Text(
                           post.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            height: 1.1,
-                          ),
+                          style:
+                              theme.textTheme.headlineLarge?.copyWith(
+                                color:
+                                    theme.appBarTheme.foregroundColor ??
+                                    theme.colorScheme.onBackground,
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                height: 1.1,
+                              ) ??
+                              const TextStyle(
+                                color: Colors.white,
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                                height: 1.1,
+                              ),
                         ),
                       ],
                     ),
@@ -107,7 +128,7 @@ class PostDetailScreen extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Container(
-              color: Colors.black,
+              color: theme.scaffoldBackgroundColor,
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
@@ -116,10 +137,13 @@ class PostDetailScreen extends StatelessWidget {
                     const SizedBox(height: 20),
 
                     // Full Description
-                    const Text(
+                    Text(
                       'About this artwork',
                       style: TextStyle(
-                        color: Colors.white,
+                        color:
+                            theme.textTheme.titleLarge?.color ??
+                            theme.appBarTheme.foregroundColor ??
+                            Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -127,8 +151,12 @@ class PostDetailScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       _getFormattedDescription(post.content),
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color:
+                            theme.textTheme.bodyLarge?.color?.withOpacity(
+                              0.9,
+                            ) ??
+                            Colors.white70,
                         fontSize: 16,
                         height: 1.6,
                       ),
@@ -138,10 +166,13 @@ class PostDetailScreen extends StatelessWidget {
 
                     // Hashtags
                     if (post.hashtags.isNotEmpty) ...[
-                      const Text(
+                      Text(
                         'Tags',
                         style: TextStyle(
-                          color: Colors.white,
+                          color:
+                              theme.textTheme.titleMedium?.color ??
+                              theme.appBarTheme.foregroundColor ??
+                              Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -167,8 +198,10 @@ class PostDetailScreen extends StatelessWidget {
                                 ),
                                 child: Text(
                                   tag,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color:
+                                        theme.appBarTheme.foregroundColor ??
+                                        Colors.white,
                                     fontSize: 14,
                                   ),
                                 ),

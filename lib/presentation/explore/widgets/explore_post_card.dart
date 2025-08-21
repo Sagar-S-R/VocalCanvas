@@ -9,15 +9,16 @@ class ExplorePostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: theme.shadowColor.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -49,7 +50,7 @@ class ExplorePostCard extends StatelessWidget {
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       color: Colors.grey.shade200,
-                      child: const Center(
+                      child: Center(
                         child: Icon(Icons.broken_image, color: Colors.grey),
                       ),
                     );
@@ -74,11 +75,15 @@ class ExplorePostCard extends StatelessWidget {
                     // Title
                     Text(
                       post.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF002924),
-                      ),
+                      style:
+                          theme.textTheme.titleMedium?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ) ??
+                          const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -89,7 +94,11 @@ class ExplorePostCard extends StatelessWidget {
                       post.content, // Using content as caption for now
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade600,
+                        color:
+                            theme.textTheme.bodyMedium?.color?.withOpacity(
+                              0.8,
+                            ) ??
+                            Colors.grey.shade600,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -103,7 +112,9 @@ class ExplorePostCard extends StatelessWidget {
                           Icon(
                             Icons.location_on,
                             size: 14,
-                            color: Colors.grey.shade500,
+                            color:
+                                theme.iconTheme.color?.withOpacity(0.7) ??
+                                Colors.grey.shade500,
                           ),
                           const SizedBox(width: 4),
                           Expanded(
@@ -111,7 +122,10 @@ class ExplorePostCard extends StatelessWidget {
                               post.location!,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey.shade500,
+                                color:
+                                    theme.textTheme.bodySmall?.color
+                                        ?.withOpacity(0.7) ??
+                                    Colors.grey.shade500,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),

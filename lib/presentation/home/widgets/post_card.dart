@@ -70,16 +70,17 @@ class _PostCardState extends State<PostCard> {
   Widget build(BuildContext context) {
     final bool isLiked = widget.post.likes.contains(_currentUserId);
 
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 40.0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: theme.shadowColor.withOpacity(0.1),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -93,9 +94,12 @@ class _PostCardState extends State<PostCard> {
               padding: const EdgeInsets.all(12.0),
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    backgroundColor: Color(0xFF002924),
-                    child: Icon(Icons.person, color: Colors.white),
+                  CircleAvatar(
+                    backgroundColor: theme.colorScheme.primary,
+                    child: Icon(
+                      Icons.person,
+                      color: theme.colorScheme.onPrimary,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -104,17 +108,23 @@ class _PostCardState extends State<PostCard> {
                       children: [
                         Text(
                           widget.post.title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Color(0xFF002924),
-                          ),
+                          style: (theme.textTheme.titleMedium ??
+                                  const TextStyle())
+                              .copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: theme.colorScheme.onSurface,
+                              ),
                         ),
                         if (widget.post.location?.isNotEmpty == true)
                           Text(
                             widget.post.location!,
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color:
+                                  theme.textTheme.bodySmall?.color?.withOpacity(
+                                    0.7,
+                                  ) ??
+                                  Colors.grey[600],
                               fontSize: 12,
                             ),
                           ),
@@ -135,7 +145,7 @@ class _PostCardState extends State<PostCard> {
                   errorBuilder:
                       (context, error, stackTrace) => Container(
                         height: 400,
-                        color: Colors.grey[200],
+                        color: theme.dividerColor,
                         child: const Center(
                           child: Icon(
                             Icons.image_not_supported,
@@ -159,26 +169,39 @@ class _PostCardState extends State<PostCard> {
                       IconButton(
                         icon: Icon(
                           isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: isLiked ? Colors.red : const Color(0xFF002924),
+                          color:
+                              isLiked
+                                  ? Colors.red
+                                  : Theme.of(context).iconTheme.color,
                         ),
                         onPressed: _toggleLike,
                       ),
-                      Text('${widget.post.likes.length}'),
+                      Text(
+                        '${widget.post.likes.length}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.comment_outlined,
-                          color: Color(0xFF002924),
+                          color: Theme.of(context).iconTheme.color,
                         ),
                         onPressed: () => _showComments(context),
                       ),
-                      Text('${widget.post.commentsCount}'),
+                      Text(
+                        '${widget.post.commentsCount}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
                       if (widget.post.audioUrl != null) ...[
                         const SizedBox(width: 8),
                         IconButton(
                           icon: Icon(
                             _isPlaying ? Icons.pause : Icons.volume_up_outlined,
-                            color: const Color(0xFF002924),
+                            color: Theme.of(context).iconTheme.color,
                           ),
                           onPressed: _playAudio,
                         ),
@@ -186,9 +209,9 @@ class _PostCardState extends State<PostCard> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.bookmark_border,
-                      color: Color(0xFF002924),
+                      color: Theme.of(context).iconTheme.color,
                     ),
                     onPressed: () {
                       /* Bookmark action */
@@ -205,7 +228,9 @@ class _PostCardState extends State<PostCard> {
                   widget.post.caption!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Color(0xFF002924)),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ),
           ],
