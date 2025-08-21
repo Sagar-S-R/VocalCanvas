@@ -74,7 +74,13 @@ class ExplorePostCard extends StatelessWidget {
                   children: [
                     // Title
                     Text(
-                      post.title,
+                      (() {
+                        String langCode =
+                            Localizations.localeOf(context).languageCode;
+                        if (langCode == 'hi') return post.title_hi;
+                        if (langCode == 'kn') return post.title_kn;
+                        return post.title_en;
+                      })(),
                       style:
                           theme.textTheme.titleMedium?.copyWith(
                             fontSize: 16,
@@ -112,7 +118,18 @@ class ExplorePostCard extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     // Location
-                    if (post.location != null && post.location!.isNotEmpty)
+                    if ((() {
+                      String langCode =
+                          Localizations.localeOf(context).languageCode;
+                      String? location;
+                      if (langCode == 'hi')
+                        location = post.location_hi;
+                      else if (langCode == 'kn')
+                        location = post.location_kn;
+                      else
+                        location = post.location_en;
+                      return location != null && location.isNotEmpty;
+                    })())
                       Row(
                         children: [
                           Icon(
@@ -125,7 +142,15 @@ class ExplorePostCard extends StatelessWidget {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              post.location!,
+                              (() {
+                                String langCode =
+                                    Localizations.localeOf(
+                                      context,
+                                    ).languageCode;
+                                if (langCode == 'hi') return post.location_hi!;
+                                if (langCode == 'kn') return post.location_kn!;
+                                return post.location_en!;
+                              })(),
                               style: TextStyle(
                                 fontSize: 12,
                                 color:

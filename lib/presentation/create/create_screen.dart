@@ -49,27 +49,32 @@ class _CreateScreenState extends State<CreateScreen> {
       "contents": [
         {
           "parts": [
-            {"text": "Translate the following text to ${targetLanguage == 'Kannada' ? 'Kannada (ಕನ್ನಡ)' : targetLanguage}, maintaining the same tone and meaning. Only return the translated text without any additional formatting or explanation: $text"}
-          ]
-        }
-      ]
+            {
+              "text":
+                  "Translate the following text to ${targetLanguage == 'Kannada' ? 'Kannada (ಕನ್ನಡ)' : targetLanguage}, maintaining the same tone and meaning. Only return the translated text without any additional formatting or explanation: $text",
+            },
+          ],
+        },
+      ],
     });
 
     try {
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         final responseBody = jsonDecode(response.body);
-        String translatedText = responseBody['candidates'][0]['content']['parts'][0]['text'];
-        
+        String translatedText =
+            responseBody['candidates'][0]['content']['parts'][0]['text'];
+
         // Debug: Print what we're getting back
         print('Translation for $targetLanguage: $translatedText');
-        
+
         // Clean any markdown formatting
         translatedText = translatedText.trim();
-        if (translatedText.startsWith('```') || translatedText.endsWith('```')) {
+        if (translatedText.startsWith('```') ||
+            translatedText.endsWith('```')) {
           translatedText = translatedText.replaceAll('```', '').trim();
         }
-        
+
         return translatedText;
       } else {
         print('Translation API error for $targetLanguage: ${response.body}');
@@ -143,10 +148,32 @@ class _CreateScreenState extends State<CreateScreen> {
     });
 
     try {
-      // Generate translations
+      // Generate translations for all text fields
       String content_en = _content;
       String content_hi = await _translateText(_content, 'Hindi');
       String content_kn = await _translateText(_content, 'Kannada');
+
+      String title_en = _title;
+      String title_hi = await _translateText(_title, 'Hindi');
+      String title_kn = await _translateText(_title, 'Kannada');
+
+      String? caption_en = _caption.isNotEmpty ? _caption : null;
+      String? caption_hi =
+          _caption.isNotEmpty ? await _translateText(_caption, 'Hindi') : null;
+      String? caption_kn =
+          _caption.isNotEmpty
+              ? await _translateText(_caption, 'Kannada')
+              : null;
+
+      String? location_en = _location.isNotEmpty ? _location : null;
+      String? location_hi =
+          _location.isNotEmpty
+              ? await _translateText(_location, 'Hindi')
+              : null;
+      String? location_kn =
+          _location.isNotEmpty
+              ? await _translateText(_location, 'Kannada')
+              : null;
 
       // Debug: Print what we're about to save
       print('Saving post with:');
@@ -155,12 +182,18 @@ class _CreateScreenState extends State<CreateScreen> {
       print('Kannada: $content_kn');
 
       await _postService.createPost(
+        title_en: title_en,
+        title_hi: title_hi,
+        title_kn: title_kn,
         content_en: content_en,
         content_hi: content_hi,
         content_kn: content_kn,
-        title: _title,
-        location: _location,
-        caption: _caption,
+        caption_en: caption_en,
+        caption_hi: caption_hi,
+        caption_kn: caption_kn,
+        location_en: location_en,
+        location_hi: location_hi,
+        location_kn: location_kn,
         hashtags: _hashtags,
         imageFile: !kIsWeb && _image != null ? _image as File : null,
         webImageFile: kIsWeb && _image != null ? _image as XFile : null,

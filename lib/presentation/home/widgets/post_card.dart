@@ -113,7 +113,13 @@ class _PostCardState extends State<PostCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.post.title,
+                          (() {
+                            String langCode =
+                                Localizations.localeOf(context).languageCode;
+                            if (langCode == 'hi') return widget.post.title_hi;
+                            if (langCode == 'kn') return widget.post.title_kn;
+                            return widget.post.title_en;
+                          })(),
                           style: (theme.textTheme.titleMedium ??
                                   const TextStyle())
                               .copyWith(
@@ -122,9 +128,28 @@ class _PostCardState extends State<PostCard> {
                                 color: theme.colorScheme.onSurface,
                               ),
                         ),
-                        if (widget.post.location?.isNotEmpty == true)
+                        if ((() {
+                          String langCode =
+                              Localizations.localeOf(context).languageCode;
+                          String? location;
+                          if (langCode == 'hi')
+                            location = widget.post.location_hi;
+                          else if (langCode == 'kn')
+                            location = widget.post.location_kn;
+                          else
+                            location = widget.post.location_en;
+                          return location?.isNotEmpty == true;
+                        })())
                           Text(
-                            widget.post.location!,
+                            (() {
+                              String langCode =
+                                  Localizations.localeOf(context).languageCode;
+                              if (langCode == 'hi')
+                                return widget.post.location_hi!;
+                              if (langCode == 'kn')
+                                return widget.post.location_kn!;
+                              return widget.post.location_en!;
+                            })(),
                             style: TextStyle(
                               color:
                                   theme.textTheme.bodySmall?.color?.withOpacity(
@@ -239,11 +264,27 @@ class _PostCardState extends State<PostCard> {
               ),
             ),
             // Caption
-            if (widget.post.caption?.isNotEmpty == true)
+            if ((() {
+              String langCode = Localizations.localeOf(context).languageCode;
+              String? caption;
+              if (langCode == 'hi')
+                caption = widget.post.caption_hi;
+              else if (langCode == 'kn')
+                caption = widget.post.caption_kn;
+              else
+                caption = widget.post.caption_en;
+              return caption?.isNotEmpty == true;
+            })())
               Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
                 child: Text(
-                  widget.post.caption!,
+                  (() {
+                    String langCode =
+                        Localizations.localeOf(context).languageCode;
+                    if (langCode == 'hi') return widget.post.caption_hi!;
+                    if (langCode == 'kn') return widget.post.caption_kn!;
+                    return widget.post.caption_en!;
+                  })(),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(

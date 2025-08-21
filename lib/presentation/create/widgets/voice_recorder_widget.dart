@@ -75,10 +75,10 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       "contents": [
         {
           "parts": [
-            {"text": "Translate the following text to $targetLanguage: $text"}
-          ]
-        }
-      ]
+            {"text": "Translate the following text to $targetLanguage: $text"},
+          ],
+        },
+      ],
     });
 
     try {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui'; // Needed for ImageFilter
 import 'package:vocal_canvas/presentation/home/widgets/post_card.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 
 import '../explore/explore_screen.dart';
 import '../search/search_screen.dart';
@@ -45,26 +46,6 @@ class HomeFeedScreen extends StatelessWidget {
           ), // Constrain width like Instagram
           child: Column(
             children: [
-              // Debug: show how many posts Firestore returns for diagnosis
-              FutureBuilder<List<Post>>(
-                future: _postService.getAllPosts(),
-                builder: (context, countSnapshot) {
-                  if (countSnapshot.connectionState ==
-                      ConnectionState.waiting) {
-                    return const SizedBox.shrink();
-                  }
-                  final total = countSnapshot.data?.length ?? 0;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'DB posts: $total',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                      ),
-                    ),
-                  );
-                },
-              ),
               Expanded(
                 child: StreamBuilder<List<Post>>(
                   stream: _postService.getPostsStream(),
@@ -128,6 +109,28 @@ class PostDetailOverlay extends StatelessWidget {
   final Post post;
   const PostDetailOverlay({super.key, required this.post});
 
+  String _getTitleForLanguage(BuildContext context) {
+    String langCode = Localizations.localeOf(context).languageCode;
+    if (langCode == 'hi')
+      return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
+    if (langCode == 'kn')
+      return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
+    return post.title_en;
+  }
+
+  String _getLocationForLanguage(BuildContext context) {
+    String langCode = Localizations.localeOf(context).languageCode;
+    if (langCode == 'hi')
+      return (post.location_hi?.isNotEmpty == true)
+          ? post.location_hi!
+          : (post.location_en ?? '');
+    if (langCode == 'kn')
+      return (post.location_kn?.isNotEmpty == true)
+          ? post.location_kn!
+          : (post.location_en ?? '');
+    return post.location_en ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -182,7 +185,7 @@ class PostDetailOverlay extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              post.title,
+                              _getTitleForLanguage(context),
                               style:
                                   theme.textTheme.titleLarge?.copyWith(
                                     fontSize: 24,
@@ -194,9 +197,9 @@ class PostDetailOverlay extends StatelessWidget {
                                   ),
                             ),
                             const SizedBox(height: 8),
-                            if (post.location?.isNotEmpty == true)
+                            if (_getLocationForLanguage(context).isNotEmpty)
                               Text(
-                                post.location!,
+                                _getLocationForLanguage(context),
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: Colors.grey[700],

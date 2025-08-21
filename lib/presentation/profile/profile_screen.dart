@@ -1,5 +1,6 @@
 // ProfileScreen
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/services/post_service.dart';
 import '../../data/models/post.dart';
 import '../../data/models/user_model.dart';
@@ -7,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
+import '../widgets/post_detail_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -62,6 +64,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     }
+  }
+
+  String _getTitleForLanguage(Post post, BuildContext context) {
+    String langCode = Localizations.localeOf(context).languageCode;
+    if (langCode == 'hi')
+      return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
+    if (langCode == 'kn')
+      return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
+    return post.title_en;
+  }
+
+  String _getCaptionForLanguage(Post post, BuildContext context) {
+    String langCode = Localizations.localeOf(context).languageCode;
+    if (langCode == 'hi')
+      return (post.caption_hi?.isNotEmpty == true)
+          ? post.caption_hi!
+          : (post.caption_en ?? '');
+    if (langCode == 'kn')
+      return (post.caption_kn?.isNotEmpty == true)
+          ? post.caption_kn!
+          : (post.caption_en ?? '');
+    return post.caption_en ?? '';
   }
 
   @override
@@ -236,26 +260,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             elevation: 4,
                             child: InkWell(
                               onTap: () {
-                                // Show post detail overlay (disabled, not implemented)
-                                // Navigator.of(context).push(
-                                //   PageRouteBuilder(
-                                //     opaque: false,
-                                //     pageBuilder:
-                                //         (BuildContext context, _, __) =>
-                                //             PostDetailOverlay(post: post),
-                                //     transitionsBuilder: (
-                                //       context,
-                                //       animation,
-                                //       secondaryAnimation,
-                                //       child,
-                                //     ) {
-                                //       return FadeTransition(
-                                //         opacity: animation,
-                                //         child: child,
-                                //       );
-                                //     },
-                                //   ),
-                                // );
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) =>
+                                            PostDetailScreen(post: post),
+                                  ),
+                                );
                               },
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,7 +297,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Padding(
                                     padding: const EdgeInsets.all(12.0),
                                     child: Text(
-                                      post.title,
+                                      _getTitleForLanguage(post, context),
                                       style:
                                           theme.textTheme.titleMedium?.copyWith(
                                             fontWeight: FontWeight.bold,
@@ -306,7 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       horizontal: 12.0,
                                     ),
                                     child: Text(
-                                      post.caption ?? '',
+                                      _getCaptionForLanguage(post, context),
                                       style:
                                           theme.textTheme.bodyMedium?.copyWith(
                                             color: theme.colorScheme.onSurface

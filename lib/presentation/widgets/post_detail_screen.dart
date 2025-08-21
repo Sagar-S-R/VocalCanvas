@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../data/models/post.dart';
 
 class PostDetailScreen extends StatelessWidget {
   final Post post;
 
   const PostDetailScreen({super.key, required this.post});
+
+  String _getLocationForLanguage(BuildContext context) {
+    String langCode = Localizations.localeOf(context).languageCode;
+    if (langCode == 'hi') return post.location_hi ?? post.location_en ?? '';
+    if (langCode == 'kn') return post.location_kn ?? post.location_en ?? '';
+    return post.location_en ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,9 +72,8 @@ class PostDetailScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (post.location != null &&
-                            post.location!.isNotEmpty &&
-                            post.location != 'Unknown')
+                        if (_getLocationForLanguage(context).isNotEmpty &&
+                            _getLocationForLanguage(context) != 'Unknown')
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -84,7 +91,7 @@ class PostDetailScreen extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              post.location!,
+                              _getLocationForLanguage(context),
                               style:
                                   theme.textTheme.bodyMedium?.copyWith(
                                     color:
@@ -102,7 +109,13 @@ class PostDetailScreen extends StatelessWidget {
                           ),
                         const SizedBox(height: 20),
                         Text(
-                          post.title,
+                          (() {
+                            String langCode =
+                                Localizations.localeOf(context).languageCode;
+                            if (langCode == 'hi') return post.title_hi;
+                            if (langCode == 'kn') return post.title_kn;
+                            return post.title_en;
+                          })(),
                           style:
                               theme.textTheme.headlineLarge?.copyWith(
                                 color:
@@ -252,9 +265,9 @@ class PostDetailScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          if (post.location != null &&
-                              post.location!.isNotEmpty &&
-                              post.location != 'Unknown') ...[
+                          if (_getLocationForLanguage(context).isNotEmpty &&
+                              _getLocationForLanguage(context) !=
+                                  'Unknown') ...[
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -265,7 +278,7 @@ class PostDetailScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  post.location!,
+                                  _getLocationForLanguage(context),
                                   style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 14,
