@@ -138,7 +138,7 @@ class SearchScreen extends StatelessWidget {
               title,
               style:
                   theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onBackground,
+                    color: theme.colorScheme.onSurface,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Lora',

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
-import '../presentation/auth/auth_page.dart';
 
 class LanguageSelectionPage extends StatelessWidget {
   const LanguageSelectionPage({super.key});

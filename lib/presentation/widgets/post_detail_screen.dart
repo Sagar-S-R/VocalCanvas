@@ -96,7 +96,7 @@ class PostDetailScreen extends StatelessWidget {
                                   theme.textTheme.bodyMedium?.copyWith(
                                     color:
                                         theme.appBarTheme.foregroundColor ??
-                                        theme.colorScheme.onBackground,
+                                        theme.colorScheme.onSurface,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                   ) ??
@@ -120,7 +120,7 @@ class PostDetailScreen extends StatelessWidget {
                               theme.textTheme.headlineLarge?.copyWith(
                                 color:
                                     theme.appBarTheme.foregroundColor ??
-                                    theme.colorScheme.onBackground,
+                                    theme.colorScheme.onSurface,
                                 fontSize: 40,
                                 fontWeight: FontWeight.bold,
                                 height: 1.1,

@@ -78,9 +78,9 @@ class ArtPostCard extends StatelessWidget {
                         String langCode =
                             Localizations.localeOf(context).languageCode;
                         String? location;
-                        if (langCode == 'hi')
+                        if (langCode == 'hi') {
                           location = post.location_hi;
-                        else if (langCode == 'kn')
+                        } else if (langCode == 'kn')
                           location = post.location_kn;
                         else
                           location = post.location_en;

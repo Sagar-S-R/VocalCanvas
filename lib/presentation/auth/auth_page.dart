@@ -157,7 +157,7 @@ class _AuthPageState extends State<AuthPage>
             fontWeight: FontWeight.bold,
             color:
                 Theme.of(context).textTheme.titleLarge?.color ??
-                Theme.of(context).colorScheme.onBackground,
+                Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -169,7 +169,7 @@ class _AuthPageState extends State<AuthPage>
                 Theme.of(
                   context,
                 ).textTheme.bodyMedium?.color?.withOpacity(0.8) ??
-                Theme.of(context).colorScheme.onBackground.withOpacity(0.8),
+                Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
           ),
         ),
       ],
@@ -188,7 +188,7 @@ class _AuthPageState extends State<AuthPage>
               fontWeight: FontWeight.bold,
               color:
                   Theme.of(context).textTheme.titleMedium?.color ??
-                  Theme.of(context).colorScheme.onBackground,
+                  Theme.of(context).colorScheme.onSurface,
             ),
           ),
           Row(
@@ -223,7 +223,7 @@ class _AuthPageState extends State<AuthPage>
               fontWeight: FontWeight.bold,
               color:
                   Theme.of(context).textTheme.titleLarge?.color ??
-                  Theme.of(context).colorScheme.onBackground,
+                  Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 16),
@@ -291,7 +291,7 @@ class _AuthPageState extends State<AuthPage>
               fontWeight: FontWeight.bold,
               color:
                   Theme.of(context).textTheme.titleLarge?.color ??
-                  Theme.of(context).colorScheme.onBackground,
+                  Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 24),
@@ -348,14 +348,14 @@ class _AuthPageState extends State<AuthPage>
       style: GoogleFonts.inter(
         color:
             Theme.of(context).textTheme.bodyMedium?.color ??
-            Theme.of(context).colorScheme.onBackground,
+            Theme.of(context).colorScheme.onSurface,
       ),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: GoogleFonts.inter(
           color:
               Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7) ??
-              Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+              Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
         ),
         prefixIcon: Icon(icon, color: Theme.of(context).iconTheme.color),
         filled: true,
@@ -462,7 +462,7 @@ class _AuthPageState extends State<AuthPage>
                       ).textTheme.bodyMedium?.color?.withOpacity(0.7) ??
                       Theme.of(
                         context,
-                      ).colorScheme.onBackground.withOpacity(0.7),
+                      ).colorScheme.onSurface.withOpacity(0.7),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -510,7 +510,7 @@ class _AuthPageState extends State<AuthPage>
           style: GoogleFonts.inter(
             color:
                 Theme.of(context).textTheme.bodyMedium?.color ??
-                Theme.of(context).colorScheme.onBackground,
+                Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),

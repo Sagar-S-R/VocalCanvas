@@ -100,7 +100,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   icon: Icon(
                     Icons.refresh,
                     color:
-                        theme.iconTheme.color ?? theme.colorScheme.onBackground,
+                        theme.iconTheme.color ?? theme.colorScheme.onSurface,
                   ),
                 ),
               ],

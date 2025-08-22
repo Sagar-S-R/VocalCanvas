@@ -68,23 +68,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String _getTitleForLanguage(Post post, BuildContext context) {
     String langCode = Localizations.localeOf(context).languageCode;
-    if (langCode == 'hi')
+    if (langCode == 'hi') {
       return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
-    if (langCode == 'kn')
+    }
+    if (langCode == 'kn') {
       return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
+    }
     return post.title_en;
   }
 
   String _getCaptionForLanguage(Post post, BuildContext context) {
     String langCode = Localizations.localeOf(context).languageCode;
-    if (langCode == 'hi')
+    if (langCode == 'hi') {
       return (post.caption_hi?.isNotEmpty == true)
           ? post.caption_hi!
           : (post.caption_en ?? '');
-    if (langCode == 'kn')
+    }
+    if (langCode == 'kn') {
       return (post.caption_kn?.isNotEmpty == true)
           ? post.caption_kn!
           : (post.caption_en ?? '');
+    }
     return post.caption_en ?? '';
   }
 
@@ -136,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 .copyWith(
                                   fontSize: 16,
                                   color: (theme.textTheme.bodyMedium?.color ??
-                                          theme.colorScheme.onBackground)
+                                          theme.colorScheme.onSurface)
                                       .withOpacity(0.95),
                                 ),
                           ),
@@ -148,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 .copyWith(
                                   fontSize: 16,
                                   color: (theme.textTheme.bodyMedium?.color ??
-                                          theme.colorScheme.onBackground)
+                                          theme.colorScheme.onSurface)
                                       .withOpacity(0.95),
                                 ),
                           ),
@@ -161,7 +165,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 theme.textTheme.bodyMedium?.copyWith(
                                   fontSize: 16,
                                   color: (theme.textTheme.bodyMedium?.color ??
-                                          theme.colorScheme.onBackground)
+                                          theme.colorScheme.onSurface)
                                       .withOpacity(0.85),
                                 ) ??
                                 const TextStyle(fontSize: 16),
@@ -174,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   _isPlaying ? Icons.pause : Icons.volume_up,
                                   color:
                                       theme.iconTheme.color ??
-                                      theme.colorScheme.onBackground,
+                                      theme.colorScheme.onSurface,
                                 ),
                                 onPressed: () async {
                                   if (_isPlaying) {
@@ -210,10 +214,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     theme.textTheme.bodyMedium?.copyWith(
                                       color:
                                           (theme.textTheme.bodyMedium?.color ??
-                                              theme.colorScheme.onBackground),
+                                              theme.colorScheme.onSurface),
                                     ) ??
                                     TextStyle(
-                                      color: theme.colorScheme.onBackground
+                                      color: theme.colorScheme.onSurface
                                           .withOpacity(0.7),
                                     ),
                               ),

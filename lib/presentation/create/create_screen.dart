@@ -149,51 +149,51 @@ class _CreateScreenState extends State<CreateScreen> {
 
     try {
       // Generate translations for all text fields
-      String content_en = _content;
-      String content_hi = await _translateText(_content, 'Hindi');
-      String content_kn = await _translateText(_content, 'Kannada');
+      String contentEn = _content;
+      String contentHi = await _translateText(_content, 'Hindi');
+      String contentKn = await _translateText(_content, 'Kannada');
 
-      String title_en = _title;
-      String title_hi = await _translateText(_title, 'Hindi');
-      String title_kn = await _translateText(_title, 'Kannada');
+      String titleEn = _title;
+      String titleHi = await _translateText(_title, 'Hindi');
+      String titleKn = await _translateText(_title, 'Kannada');
 
-      String? caption_en = _caption.isNotEmpty ? _caption : null;
-      String? caption_hi =
+      String? captionEn = _caption.isNotEmpty ? _caption : null;
+      String? captionHi =
           _caption.isNotEmpty ? await _translateText(_caption, 'Hindi') : null;
-      String? caption_kn =
+      String? captionKn =
           _caption.isNotEmpty
               ? await _translateText(_caption, 'Kannada')
               : null;
 
-      String? location_en = _location.isNotEmpty ? _location : null;
-      String? location_hi =
+      String? locationEn = _location.isNotEmpty ? _location : null;
+      String? locationHi =
           _location.isNotEmpty
               ? await _translateText(_location, 'Hindi')
               : null;
-      String? location_kn =
+      String? locationKn =
           _location.isNotEmpty
               ? await _translateText(_location, 'Kannada')
               : null;
 
       // Debug: Print what we're about to save
       print('Saving post with:');
-      print('English: $content_en');
-      print('Hindi: $content_hi');
-      print('Kannada: $content_kn');
+      print('English: $contentEn');
+      print('Hindi: $contentHi');
+      print('Kannada: $contentKn');
 
       await _postService.createPost(
-        title_en: title_en,
-        title_hi: title_hi,
-        title_kn: title_kn,
-        content_en: content_en,
-        content_hi: content_hi,
-        content_kn: content_kn,
-        caption_en: caption_en,
-        caption_hi: caption_hi,
-        caption_kn: caption_kn,
-        location_en: location_en,
-        location_hi: location_hi,
-        location_kn: location_kn,
+        title_en: titleEn,
+        title_hi: titleHi,
+        title_kn: titleKn,
+        content_en: contentEn,
+        content_hi: contentHi,
+        content_kn: contentKn,
+        caption_en: captionEn,
+        caption_hi: captionHi,
+        caption_kn: captionKn,
+        location_en: locationEn,
+        location_hi: locationHi,
+        location_kn: locationKn,
         hashtags: _hashtags,
         imageFile: !kIsWeb && _image != null ? _image as File : null,
         webImageFile: kIsWeb && _image != null ? _image as XFile : null,
@@ -378,7 +378,7 @@ class _CreateScreenState extends State<CreateScreen> {
                                                   color:
                                                       theme
                                                           .colorScheme
-                                                          .onBackground,
+                                                          .onSurface,
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w500,
                                                 ) ??
@@ -405,7 +405,7 @@ class _CreateScreenState extends State<CreateScreen> {
                                               color:
                                                   theme
                                                       .colorScheme
-                                                      .onBackground,
+                                                      .onSurface,
                                               fontSize: 16,
                                               height: 1.4,
                                               fontWeight: FontWeight.w400,
@@ -428,7 +428,7 @@ class _CreateScreenState extends State<CreateScreen> {
                                     _title,
                                     style:
                                         theme.textTheme.headlineLarge?.copyWith(
-                                          color: theme.colorScheme.onBackground,
+                                          color: theme.colorScheme.onSurface,
                                           fontSize: 36,
                                           fontWeight: FontWeight.bold,
                                           height: 1.1,

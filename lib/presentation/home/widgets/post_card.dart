@@ -132,9 +132,9 @@ class _PostCardState extends State<PostCard> {
                           String langCode =
                               Localizations.localeOf(context).languageCode;
                           String? location;
-                          if (langCode == 'hi')
+                          if (langCode == 'hi') {
                             location = widget.post.location_hi;
-                          else if (langCode == 'kn')
+                          } else if (langCode == 'kn')
                             location = widget.post.location_kn;
                           else
                             location = widget.post.location_en;
@@ -144,10 +144,12 @@ class _PostCardState extends State<PostCard> {
                             (() {
                               String langCode =
                                   Localizations.localeOf(context).languageCode;
-                              if (langCode == 'hi')
+                              if (langCode == 'hi') {
                                 return widget.post.location_hi!;
-                              if (langCode == 'kn')
+                              }
+                              if (langCode == 'kn') {
                                 return widget.post.location_kn!;
+                              }
                               return widget.post.location_en!;
                             })(),
                             style: TextStyle(
@@ -267,9 +269,9 @@ class _PostCardState extends State<PostCard> {
             if ((() {
               String langCode = Localizations.localeOf(context).languageCode;
               String? caption;
-              if (langCode == 'hi')
+              if (langCode == 'hi') {
                 caption = widget.post.caption_hi;
-              else if (langCode == 'kn')
+              } else if (langCode == 'kn')
                 caption = widget.post.caption_kn;
               else
                 caption = widget.post.caption_en;

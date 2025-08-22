@@ -111,23 +111,27 @@ class PostDetailOverlay extends StatelessWidget {
 
   String _getTitleForLanguage(BuildContext context) {
     String langCode = Localizations.localeOf(context).languageCode;
-    if (langCode == 'hi')
+    if (langCode == 'hi') {
       return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
-    if (langCode == 'kn')
+    }
+    if (langCode == 'kn') {
       return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
+    }
     return post.title_en;
   }
 
   String _getLocationForLanguage(BuildContext context) {
     String langCode = Localizations.localeOf(context).languageCode;
-    if (langCode == 'hi')
+    if (langCode == 'hi') {
       return (post.location_hi?.isNotEmpty == true)
           ? post.location_hi!
           : (post.location_en ?? '');
-    if (langCode == 'kn')
+    }
+    if (langCode == 'kn') {
       return (post.location_kn?.isNotEmpty == true)
           ? post.location_kn!
           : (post.location_en ?? '');
+    }
     return post.location_en ?? '';
   }
 
@@ -216,10 +220,12 @@ class PostDetailOverlay extends StatelessWidget {
                                         Localizations.localeOf(
                                           context,
                                         ).languageCode;
-                                    if (langCode == 'hi')
+                                    if (langCode == 'hi') {
                                       return post.content_hi;
-                                    if (langCode == 'kn')
+                                    }
+                                    if (langCode == 'kn') {
                                       return post.content_kn;
+                                    }
                                     return post.content_en;
                                   })(),
                                   style:
