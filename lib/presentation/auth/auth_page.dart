@@ -9,7 +9,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 // ...existing code...
 
-
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
@@ -27,15 +26,13 @@ class _AuthPageState extends State<AuthPage>
   Uint8List? _profileAudioBytes;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  
 
   bool _isRegisterMode = false;
   bool _isLoading = false;
-  
+
   bool _showOtpField = false;
 
   // Colors
@@ -74,11 +71,11 @@ class _AuthPageState extends State<AuthPage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     final backgroundColor = theme.scaffoldBackgroundColor;
     return Scaffold(
       backgroundColor: backgroundColor,
-      
+
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -420,10 +417,6 @@ class _AuthPageState extends State<AuthPage>
     );
   }
 
-
-
-  
-
   Widget _buildFooter() {
     return Column(
       children: [
@@ -526,14 +519,6 @@ class _AuthPageState extends State<AuthPage>
       }
     }
   }
-
-
-
-
-
-  
-
-  
 
   // Helper Methods
   void _navigateToHome() {
