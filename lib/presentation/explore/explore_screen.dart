@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
-import 'dart:math';
+// import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+// import 'dart:math';
 
 import '../../core/services/post_service.dart';
 import '../../data/models/post.dart';
@@ -20,7 +20,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Post> _posts = [];
   bool _isLoading = true;
   String? _error;
-  final _random = Random();
+  // Removed unused _random
 
   @override
   void initState() {
@@ -99,8 +99,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   onPressed: _refreshPosts,
                   icon: Icon(
                     Icons.refresh,
-                    color:
-                        theme.iconTheme.color ?? theme.colorScheme.onSurface,
+                    color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -120,27 +119,43 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     ? Center(child: Text('Error: $_error'))
                     : _posts.isEmpty
                     ? const Center(child: Text('No posts yet.'))
-                    : RefreshIndicator(
-                      onRefresh: _refreshPosts,
-                      child: MasonryGridView.count(
-                        crossAxisCount: 4, // Changed to 4 columns
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        itemCount: _posts.length,
-                        itemBuilder: (context, index) {
-                          final post = _posts[index];
-                          // More dynamic sizing
-                          final height = (1 + _random.nextInt(3)) * 100.0;
-                          return SizedBox(
-                            height: height,
-                            child: ExplorePostCard(
-                              post: post,
-                              onTap: () => _openPostDetail(post),
+                    : LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Responsive columns: min 2, max 5
+                        int columns = (constraints.maxWidth ~/ 220).clamp(2, 5);
+                        double spacing = 12;
+                        double size =
+                            (constraints.maxWidth - (columns + 1) * spacing) /
+                            columns;
+                        return RefreshIndicator(
+                          onRefresh: _refreshPosts,
+                          child: GridView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
                             ),
-                          );
-                        },
-                      ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  crossAxisSpacing: spacing,
+                                  mainAxisSpacing: spacing,
+                                  childAspectRatio: 1,
+                                ),
+                            itemCount: _posts.length,
+                            itemBuilder: (context, index) {
+                              final post = _posts[index];
+                              return SizedBox(
+                                width: size,
+                                height: size,
+                                child: ExplorePostCard(
+                                  post: post,
+                                  onTap: () => _openPostDetail(post),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
                     ),
           ),
         ],

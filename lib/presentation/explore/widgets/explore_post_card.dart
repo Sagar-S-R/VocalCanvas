@@ -9,165 +9,103 @@ class ExplorePostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    String langCode = Localizations.localeOf(context).languageCode;
+    String title =
+        langCode == 'hi'
+            ? post.title_hi
+            : langCode == 'kn'
+            ? post.title_kn
+            : post.title_en;
+    String location =
+        langCode == 'hi'
+            ? (post.location_hi ?? post.location_en ?? '')
+            : langCode == 'kn'
+            ? (post.location_kn ?? post.location_en ?? '')
+            : (post.location_en ?? '');
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: theme.shadowColor.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child:
+                  post.imageUrl != null
+                      ? Image.network(
+                        post.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey.shade200,
+                            child: Center(
+                              child: Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                      : Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(
+                            Icons.palette,
+                            color: Colors.grey,
+                            size: 40,
+                          ),
+                        ),
+                      ),
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Artwork Image
-              if (post.imageUrl != null)
-                Image.network(
-                  post.imageUrl!,
-                  fit: BoxFit.cover,
-                  // Handle potential loading errors
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value:
-                            loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey.shade200,
-                      child: Center(
-                        child: Icon(Icons.broken_image, color: Colors.grey),
-                      ),
-                    );
-                  },
-                )
-              else
-                // Placeholder for posts without images
-                Container(
-                  height: 150,
-                  color: Colors.grey.shade200,
-                  child: const Center(
-                    child: Icon(Icons.palette, color: Colors.grey, size: 40),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Colors.black.withOpacity(0.8), Colors.transparent],
                   ),
                 ),
-
-              // Text Content
-              Padding(
-                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Title
                     Text(
-                      (() {
-                        String langCode =
-                            Localizations.localeOf(context).languageCode;
-                        if (langCode == 'hi') return post.title_hi;
-                        if (langCode == 'kn') return post.title_kn;
-                        return post.title_en;
-                      })(),
+                      title,
                       style:
-                          theme.textTheme.titleMedium?.copyWith(
-                            fontSize: 16,
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 16,
                           ) ??
                           const TextStyle(
-                            fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 16,
                           ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-
-                    // Multilingual Content
-                    Text(
-                      (() {
-                        String langCode =
-                            Localizations.localeOf(context).languageCode;
-                        if (langCode == 'hi') return post.content_hi;
-                        if (langCode == 'kn') return post.content_kn;
-                        return post.content_en;
-                      })(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color:
-                            theme.textTheme.bodyMedium?.color?.withOpacity(
-                              0.8,
+                    if (location.isNotEmpty)
+                      Text(
+                        location,
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withOpacity(0.9),
                             ) ??
-                            Colors.grey.shade600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Location
-                    if ((() {
-                      String langCode =
-                          Localizations.localeOf(context).languageCode;
-                      String? location;
-                      if (langCode == 'hi') {
-                        location = post.location_hi;
-                      } else if (langCode == 'kn')
-                        location = post.location_kn;
-                      else
-                        location = post.location_en;
-                      return location != null && location.isNotEmpty;
-                    })())
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color:
-                                theme.iconTheme.color?.withOpacity(0.7) ??
-                                Colors.grey.shade500,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              (() {
-                                String langCode =
-                                    Localizations.localeOf(
-                                      context,
-                                    ).languageCode;
-                                if (langCode == 'hi') return post.location_hi!;
-                                if (langCode == 'kn') return post.location_kn!;
-                                return post.location_en!;
-                              })(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color:
-                                    theme.textTheme.bodySmall?.color
-                                        ?.withOpacity(0.7) ??
-                                    Colors.grey.shade500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+                            TextStyle(color: Colors.white.withOpacity(0.9)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
