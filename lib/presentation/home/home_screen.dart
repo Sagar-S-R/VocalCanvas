@@ -3,13 +3,16 @@ import 'dart:ui'; // Needed for ImageFilter
 import 'package:vocal_canvas/presentation/home/widgets/post_card.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/post_service.dart';
 
 import '../explore/explore_screen.dart';
 import '../search/search_screen.dart';
 import '../create/create_screen.dart';
 import '../exhibition/exhibition_screen.dart';
 import '../settings/settings_screen.dart';
-import '../../core/services/post_service.dart';
 import '../../data/models/post.dart';
 import '../profile/profile_screen.dart'; // Import ProfileScreen
 
@@ -105,39 +108,101 @@ class HomePostCard extends StatelessWidget {
 // -----------------------------------------------------------------
 // 3. POST DETAIL OVERLAY
 // -----------------------------------------------------------------
-class PostDetailOverlay extends StatelessWidget {
+class PostDetailOverlay extends StatefulWidget {
   final Post post;
   const PostDetailOverlay({super.key, required this.post});
+
+  @override
+  State<PostDetailOverlay> createState() => _PostDetailOverlayState();
+}
+
+class _PostDetailOverlayState extends State<PostDetailOverlay> {
+  late final PostService _postService;
+  late final AudioPlayer _audioPlayer;
+  bool _isPlaying = false;
+  String? _currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _postService = PostService();
+    _audioPlayer = AudioPlayer();
+  _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
 
   String _getTitleForLanguage(BuildContext context) {
     String langCode = Localizations.localeOf(context).languageCode;
     if (langCode == 'hi') {
-      return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
+      return widget.post.title_hi.isNotEmpty ? widget.post.title_hi : widget.post.title_en;
     }
     if (langCode == 'kn') {
-      return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
+      return widget.post.title_kn.isNotEmpty ? widget.post.title_kn : widget.post.title_en;
     }
-    return post.title_en;
+    return widget.post.title_en;
   }
 
   String _getLocationForLanguage(BuildContext context) {
     String langCode = Localizations.localeOf(context).languageCode;
     if (langCode == 'hi') {
-      return (post.location_hi?.isNotEmpty == true)
-          ? post.location_hi!
-          : (post.location_en ?? '');
+      return (widget.post.location_hi?.isNotEmpty == true)
+          ? widget.post.location_hi!
+          : (widget.post.location_en ?? '');
     }
     if (langCode == 'kn') {
-      return (post.location_kn?.isNotEmpty == true)
-          ? post.location_kn!
-          : (post.location_en ?? '');
+      return (widget.post.location_kn?.isNotEmpty == true)
+          ? widget.post.location_kn!
+          : (widget.post.location_en ?? '');
     }
-    return post.location_en ?? '';
+    return widget.post.location_en ?? '';
+  }
+
+  Future<void> _toggleLike() async {
+    // Mirror PostCard behavior but without immediate count UI; rely on re-render
+  if (_currentUserId == null) return;
+  await _postService.toggleLike(widget.post.id, _currentUserId!);
+    if (mounted) setState(() {});
+  }
+
+  void _showComments(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentsSheet(postId: widget.post.id),
+    );
+  }
+
+  Future<void> _playAudio() async {
+    final audioUrl = widget.post.audioUrl;
+    if (audioUrl == null) return;
+    if (_isPlaying) {
+      await _audioPlayer.pause();
+      setState(() => _isPlaying = false);
+      return;
+    }
+    try {
+      if (audioUrl.startsWith('data:audio')) {
+        final base64Str = audioUrl.split(',').last;
+        final bytes = base64Decode(base64Str);
+        await _audioPlayer.play(BytesSource(bytes));
+      } else {
+        await _audioPlayer.play(UrlSource(audioUrl));
+      }
+      setState(() => _isPlaying = true);
+    } catch (_) {
+      setState(() => _isPlaying = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Scaffold(
@@ -158,7 +223,7 @@ class PostDetailOverlay extends StatelessWidget {
                 child: Row(
                   children: [
                     // Image
-                    if (post.imageUrl != null)
+                    if (widget.post.imageUrl != null)
                       Expanded(
                         flex: 2,
                         child: ClipRRect(
@@ -167,7 +232,7 @@ class PostDetailOverlay extends StatelessWidget {
                             bottomLeft: Radius.circular(20),
                           ),
                           child: Image.network(
-                            post.imageUrl!,
+                            widget.post.imageUrl!,
                             fit: BoxFit.cover,
                             height: double.infinity,
                             errorBuilder:
@@ -221,12 +286,12 @@ class PostDetailOverlay extends StatelessWidget {
                                           context,
                                         ).languageCode;
                                     if (langCode == 'hi') {
-                                      return post.content_hi;
+                                      return widget.post.content_hi;
                                     }
                                     if (langCode == 'kn') {
-                                      return post.content_kn;
+                                      return widget.post.content_kn;
                                     }
-                                    return post.content_en;
+                                    return widget.post.content_en;
                                   })(),
                                   style:
                                       theme.textTheme.bodyLarge?.copyWith(
@@ -246,17 +311,20 @@ class PostDetailOverlay extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.favorite_border),
-                                  onPressed: () {},
+                                  icon: const Icon(Icons.favorite),
+                                  onPressed: _toggleLike,
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.comment_outlined),
-                                  onPressed: () {},
+                                  onPressed: () => _showComments(context),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.volume_up_outlined),
-                                  onPressed: () {},
-                                ),
+                                if (widget.post.audioUrl != null)
+                                  IconButton(
+                                    icon: Icon(_isPlaying
+                                        ? Icons.pause
+                                        : Icons.volume_up_outlined),
+                                    onPressed: _playAudio,
+                                  ),
                               ],
                             ),
                           ],

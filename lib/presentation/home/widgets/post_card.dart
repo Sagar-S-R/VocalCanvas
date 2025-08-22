@@ -189,13 +189,13 @@ class _PostCardState extends State<PostCard> {
                 ),
               ),
             // Action Buttons
-            Padding(
+      Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 8.0,
                 vertical: 4.0,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Row(
                     children: [
@@ -240,15 +240,6 @@ class _PostCardState extends State<PostCard> {
                         ),
                       ],
                     ],
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.bookmark_border,
-                      color: Theme.of(context).iconTheme.color,
-                    ),
-                    onPressed: () {
-                      /* Bookmark action */
-                    },
                   ),
                 ],
               ),
