@@ -5,10 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../create/widgets/voice_recorder_widget.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+
 import 'package:google_fonts/google_fonts.dart';
 // ...existing code...
-import '../settings/settings_screen.dart';
+
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -26,17 +26,16 @@ class _AuthPageState extends State<AuthPage>
   String? _generatedLocation;
   Uint8List? _profileAudioBytes;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
+  
 
   bool _isRegisterMode = false;
   bool _isLoading = false;
-  String? _verificationId;
+  
   bool _showOtpField = false;
 
   // Colors
@@ -68,8 +67,6 @@ class _AuthPageState extends State<AuthPage>
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
-    _phoneController.dispose();
-    _otpController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -77,27 +74,11 @@ class _AuthPageState extends State<AuthPage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
+    
     final backgroundColor = theme.scaffoldBackgroundColor;
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: Text("Welcome"),
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        foregroundColor: primaryColor,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => SettingsScreen()),
-              );
-            },
-          ),
-        ],
-      ),
+      
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -112,8 +93,6 @@ class _AuthPageState extends State<AuthPage>
                     _buildLogoSection(),
                     const SizedBox(height: 32),
                     _buildAuthForm(),
-                    const SizedBox(height: 24),
-                    _buildSocialButtons(),
                     const SizedBox(height: 24),
                     _buildFooter(),
                   ],
@@ -441,90 +420,9 @@ class _AuthPageState extends State<AuthPage>
     );
   }
 
-  Widget _buildSocialButtons() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Divider(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'OR',
-                style: GoogleFonts.inter(
-                  color:
-                      Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.color?.withOpacity(0.7) ??
-                      Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Divider(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        _buildSocialButton(
-          label: 'Continue with Google',
-          // Make sure to add google_logo.png to an assets folder
-          // and declare it in pubspec.yaml
-          icon: Image.asset('google_logo.png', height: 24, width: 24),
-          onPressed: _isLoading ? null : _signInWithGoogle,
-        ),
-        const SizedBox(height: 16),
-        _buildSocialButton(
-          label: 'Continue with Phone',
-          icon: Icon(
-            Icons.phone_android_rounded,
-            color: Theme.of(context).iconTheme.color,
-          ),
-          onPressed: _isLoading ? null : _showPhoneAuthDialog,
-        ),
-      ],
-    );
-  }
 
-  Widget _buildSocialButton({
-    required String label,
-    required Widget icon,
-    required VoidCallback? onPressed,
-  }) {
-    return SizedBox(
-      height: 50,
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        icon: icon,
-        label: Text(
-          label,
-          style: GoogleFonts.inter(
-            color:
-                Theme.of(context).textTheme.bodyMedium?.color ??
-                Theme.of(context).colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: primaryColor,
-          side: BorderSide(color: primaryColor.withOpacity(0.3), width: 1.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        onPressed: onPressed,
-      ),
-    );
-  }
+
+  
 
   Widget _buildFooter() {
     return Column(
@@ -629,177 +527,13 @@ class _AuthPageState extends State<AuthPage>
     }
   }
 
-  Future<void> _signInWithGoogle() async {
-    setState(() {
-      _isLoading = true;
-    });
 
-    try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-        return;
-      }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
 
-      await _auth.signInWithCredential(credential);
-      _navigateToHome();
-    } catch (e) {
-      _showErrorDialog('Google sign-in failed. Please try again.');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
-  void _showPhoneAuthDialog() {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Phone Authentication'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!_showOtpField) ...[
-                  TextField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number (with country code)',
-                      hintText: '+1234567890',
-                      prefixIcon: Icon(Icons.phone),
-                    ),
-                    keyboardType: TextInputType.phone,
-                  ),
-                ] else ...[
-                  const Text('Enter the OTP sent to your phone:'),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _otpController,
-                    decoration: const InputDecoration(
-                      labelText: 'OTP',
-                      prefixIcon: Icon(Icons.message),
-                    ),
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                  ),
-                ],
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  setState(() {
-                    _showOtpField = false;
-                  });
-                },
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  if (!_showOtpField) {
-                    _startPhoneAuth();
-                  } else {
-                    _verifyOtp();
-                  }
-                },
-                child: Text(_showOtpField ? 'Verify OTP' : 'Send OTP'),
-              ),
-            ],
-          ),
-    );
-  }
+  
 
-  Future<void> _startPhoneAuth() async {
-    if (_phoneController.text.isEmpty) {
-      _showErrorDialog('Please enter a phone number.');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: _phoneController.text.trim(),
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          await _auth.signInWithCredential(credential);
-          _navigateToHome();
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          _showErrorDialog(_getFirebaseAuthErrorMessage(e));
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          if (mounted) {
-            setState(() {
-              _verificationId = verificationId;
-              _showOtpField = true;
-              _isLoading = false;
-            });
-            _showPhoneAuthDialog();
-          }
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          if (mounted) {
-            _verificationId = verificationId;
-          }
-        },
-      );
-    } catch (e) {
-      _showErrorDialog('Phone authentication failed. Please try again.');
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _verifyOtp() async {
-    if (_otpController.text.isEmpty || _verificationId == null) {
-      _showErrorDialog('Please enter the OTP.');
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: _otpController.text.trim(),
-      );
-
-      await _auth.signInWithCredential(credential);
-      _navigateToHome();
-    } on FirebaseAuthException catch (e) {
-      _showErrorDialog(_getFirebaseAuthErrorMessage(e));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _showOtpField = false;
-        });
-      }
-    }
-  }
+  
 
   // Helper Methods
   void _navigateToHome() {
