@@ -82,11 +82,7 @@ class _AuthPageState extends State<AuthPage>
         child: Stack(
           children: [
             // Language Toggle at top-right without removing existing UI
-            Positioned(
-              top: 8,
-              right: 8,
-              child: _buildLanguageToggle(context),
-            ),
+            Positioned(top: 8, right: 8, child: _buildLanguageToggle(context)),
             Center(
               child: SingleChildScrollView(
                 child: FadeTransition(
@@ -149,20 +145,21 @@ class _AuthPageState extends State<AuthPage>
           await prefs.setString('languageCode', locale.languageCode);
           if (mounted) setState(() {});
         },
-        itemBuilder: (context) => [
-          PopupMenuItem(
-            value: const Locale('en'),
-            child: const Text('English'),
-          ),
-          PopupMenuItem(
-            value: const Locale('hi'),
-            child: const Text('हिंदी'),
-          ),
-          PopupMenuItem(
-            value: const Locale('kn'),
-            child: const Text('ಕನ್ನಡ'),
-          ),
-        ],
+        itemBuilder:
+            (context) => [
+              PopupMenuItem(
+                value: const Locale('en'),
+                child: const Text('English'),
+              ),
+              PopupMenuItem(
+                value: const Locale('hi'),
+                child: const Text('हिंदी'),
+              ),
+              PopupMenuItem(
+                value: const Locale('kn'),
+                child: const Text('ಕನ್ನಡ'),
+              ),
+            ],
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
@@ -170,7 +167,10 @@ class _AuthPageState extends State<AuthPage>
             children: [
               const Icon(Icons.language, size: 18),
               const SizedBox(width: 6),
-              Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+              Text(
+                label,
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              ),
             ],
           ),
         ),
@@ -519,7 +519,7 @@ class _AuthPageState extends State<AuthPage>
   // Authentication Methods
   Future<void> _signInWithEmail() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-  _showErrorDialog(tr('fill_all_fields'));
+      _showErrorDialog(tr('fill_all_fields'));
       return;
     }
 
@@ -550,7 +550,7 @@ class _AuthPageState extends State<AuthPage>
         _passwordController.text.isEmpty ||
         _generatedBio == null ||
         _profileAudioBytes == null) {
-  _showErrorDialog(tr('fill_fields_and_record_bio'));
+      _showErrorDialog(tr('fill_fields_and_record_bio'));
       return;
     }
 
@@ -606,12 +606,12 @@ class _AuthPageState extends State<AuthPage>
       context: context,
       builder:
           (context) => AlertDialog(
-      title: Text(tr('error_title')),
+            title: Text(tr('error_title')),
             content: Text(message),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-        child: Text(tr('ok')),
+                child: Text(tr('ok')),
               ),
             ],
           ),
@@ -621,21 +621,21 @@ class _AuthPageState extends State<AuthPage>
   String _getFirebaseAuthErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
-  return tr('err_user_not_found');
+        return tr('err_user_not_found');
       case 'wrong-password':
-  return tr('err_wrong_password');
+        return tr('err_wrong_password');
       case 'email-already-in-use':
-  return tr('err_email_in_use');
+        return tr('err_email_in_use');
       case 'weak-password':
-  return tr('err_weak_password');
+        return tr('err_weak_password');
       case 'invalid-email':
-  return tr('err_invalid_email');
+        return tr('err_invalid_email');
       case 'too-many-requests':
-  return tr('err_too_many_requests');
+        return tr('err_too_many_requests');
       case 'operation-not-allowed':
-  return tr('err_operation_not_allowed');
+        return tr('err_operation_not_allowed');
       default:
-  return tr('err_generic');
+        return tr('err_generic');
     }
   }
 }
