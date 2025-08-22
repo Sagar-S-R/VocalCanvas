@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 // ...existing code...
 
 class AuthPage extends StatefulWidget {
@@ -77,25 +79,99 @@ class _AuthPageState extends State<AuthPage>
       backgroundColor: backgroundColor,
 
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildLogoSection(),
-                    const SizedBox(height: 32),
-                    _buildAuthForm(),
-                    const SizedBox(height: 24),
-                    _buildFooter(),
-                  ],
+        child: Stack(
+          children: [
+            // Language Toggle at top-right without removing existing UI
+            Positioned(
+              top: 8,
+              right: 8,
+              child: _buildLanguageToggle(context),
+            ),
+            Center(
+              child: SingleChildScrollView(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildLogoSection(),
+                        const SizedBox(height: 32),
+                        _buildAuthForm(),
+                        const SizedBox(height: 24),
+                        _buildFooter(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageToggle(BuildContext context) {
+    final current = context.locale.languageCode;
+    String label;
+    switch (current) {
+      case 'hi':
+        label = 'हिंदी';
+        break;
+      case 'kn':
+        label = 'ಕನ್ನಡ';
+        break;
+      default:
+        label = 'EN';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: PopupMenuButton<Locale>(
+        tooltip: tr('choose_language'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onSelected: (locale) async {
+          await context.setLocale(locale);
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('languageCode', locale.languageCode);
+          if (mounted) setState(() {});
+        },
+        itemBuilder: (context) => [
+          PopupMenuItem(
+            value: const Locale('en'),
+            child: const Text('English'),
+          ),
+          PopupMenuItem(
+            value: const Locale('hi'),
+            child: const Text('हिंदी'),
+          ),
+          PopupMenuItem(
+            value: const Locale('kn'),
+            child: const Text('ಕನ್ನಡ'),
+          ),
+        ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.language, size: 18),
+              const SizedBox(width: 6),
+              Text(label, style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+            ],
           ),
         ),
       ),
@@ -138,7 +214,7 @@ class _AuthPageState extends State<AuthPage>
         ),
         const SizedBox(height: 8),
         Text(
-          'Your Voice, Your Story',
+          tr('tagline'),
           style: GoogleFonts.inter(
             fontSize: 16,
             color:
@@ -158,7 +234,7 @@ class _AuthPageState extends State<AuthPage>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Select your role:',
+            tr('select_role'),
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -171,7 +247,7 @@ class _AuthPageState extends State<AuthPage>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ChoiceChip(
-                label: const Text('Artist'),
+                label: Text(tr('artist')),
                 selected: _role == 'Artist',
                 onSelected: (selected) {
                   setState(() {
@@ -181,7 +257,7 @@ class _AuthPageState extends State<AuthPage>
               ),
               const SizedBox(width: 16),
               ChoiceChip(
-                label: const Text('Admirer'),
+                label: Text(tr('admirer')),
                 selected: _role == 'Admirer',
                 onSelected: (selected) {
                   setState(() {
@@ -193,7 +269,7 @@ class _AuthPageState extends State<AuthPage>
           ),
           const SizedBox(height: 24),
           Text(
-            'Record a short voice intro for your bio',
+            tr('record_bio_prompt'),
             style: GoogleFonts.inter(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -228,13 +304,13 @@ class _AuthPageState extends State<AuthPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Generated Bio:',
+                    tr('generated_bio'),
                     style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                   ),
                   Text(_generatedBio!, style: GoogleFonts.inter()),
                   if (_generatedLocation != null)
                     Text(
-                      'Location: $_generatedLocation',
+                      '${tr('location')}: $_generatedLocation',
                       style: GoogleFonts.inter(),
                     ),
                 ],
@@ -249,7 +325,7 @@ class _AuthPageState extends State<AuthPage>
                 });
                 _registerWithEmail();
               },
-              child: const Text('Finish Registration'),
+              child: Text(tr('finish_registration')),
             ),
           if (_isLoading) const Center(child: CircularProgressIndicator()),
         ],
@@ -261,7 +337,7 @@ class _AuthPageState extends State<AuthPage>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            _isRegisterMode ? 'Create your Account' : 'Welcome Back',
+            _isRegisterMode ? tr('create_account_title') : tr('welcome_back'),
             style: GoogleFonts.inter(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -274,21 +350,21 @@ class _AuthPageState extends State<AuthPage>
           if (_isRegisterMode) ...[
             _buildTextField(
               controller: _nameController,
-              label: 'Full Name',
+              label: tr('full_name'),
               icon: Icons.person_outline_rounded,
             ),
             const SizedBox(height: 16),
           ],
           _buildTextField(
             controller: _emailController,
-            label: 'Email',
+            label: tr('email'),
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 16),
           _buildTextField(
             controller: _passwordController,
-            label: 'Password',
+            label: tr('password'),
             icon: Icons.lock_outline_rounded,
             obscureText: true,
           ),
@@ -300,7 +376,7 @@ class _AuthPageState extends State<AuthPage>
                   _registerStep = 1;
                 });
               },
-              child: const Text('Next: Record Voice Bio'),
+              child: Text(tr('next_record_bio')),
             ),
           if (!_isRegisterMode) _buildAuthButton(),
           const SizedBox(height: 16),
@@ -379,7 +455,7 @@ class _AuthPageState extends State<AuthPage>
                   ),
                 )
                 : Text(
-                  _isRegisterMode ? 'Create Account' : 'Sign In',
+                  _isRegisterMode ? tr('create_account_button') : tr('sign_in'),
                   style: GoogleFonts.inter(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -395,8 +471,8 @@ class _AuthPageState extends State<AuthPage>
       children: [
         Text(
           _isRegisterMode
-              ? 'Already have an account?'
-              : "Don't have an account?",
+              ? tr('already_have_account')
+              : tr('dont_have_account'),
           style: GoogleFonts.inter(color: primaryColor.withOpacity(0.8)),
         ),
         TextButton(
@@ -406,7 +482,7 @@ class _AuthPageState extends State<AuthPage>
             });
           },
           child: Text(
-            _isRegisterMode ? 'Sign In' : 'Register',
+            _isRegisterMode ? tr('sign_in') : tr('register'),
             style: GoogleFonts.inter(
               color: primaryColor,
               fontWeight: FontWeight.bold,
@@ -421,7 +497,7 @@ class _AuthPageState extends State<AuthPage>
     return Column(
       children: [
         Text(
-          'By continuing, you agree to our Terms of Service and Privacy Policy.',
+          tr('terms_and_privacy_disclaimer'),
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
             fontSize: 12,
@@ -430,8 +506,8 @@ class _AuthPageState extends State<AuthPage>
         ),
         if (kIsWeb && _showOtpField) ...[
           const SizedBox(height: 16),
-          const Text(
-            'This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.',
+          Text(
+            tr('recaptcha_notice'),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 10, color: Colors.grey),
           ),
@@ -443,7 +519,7 @@ class _AuthPageState extends State<AuthPage>
   // Authentication Methods
   Future<void> _signInWithEmail() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showErrorDialog('Please fill in all fields.');
+  _showErrorDialog(tr('fill_all_fields'));
       return;
     }
 
@@ -474,7 +550,7 @@ class _AuthPageState extends State<AuthPage>
         _passwordController.text.isEmpty ||
         _generatedBio == null ||
         _profileAudioBytes == null) {
-      _showErrorDialog('Please fill in all fields and record your bio.');
+  _showErrorDialog(tr('fill_fields_and_record_bio'));
       return;
     }
 
@@ -530,12 +606,12 @@ class _AuthPageState extends State<AuthPage>
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Error'),
+      title: Text(tr('error_title')),
             content: Text(message),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
+        child: Text(tr('ok')),
               ),
             ],
           ),
@@ -545,21 +621,21 @@ class _AuthPageState extends State<AuthPage>
   String _getFirebaseAuthErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
-        return 'No user found with this email address.';
+  return tr('err_user_not_found');
       case 'wrong-password':
-        return 'Wrong password provided.';
+  return tr('err_wrong_password');
       case 'email-already-in-use':
-        return 'An account already exists with this email address.';
+  return tr('err_email_in_use');
       case 'weak-password':
-        return 'The password is too weak.';
+  return tr('err_weak_password');
       case 'invalid-email':
-        return 'The email address is not valid.';
+  return tr('err_invalid_email');
       case 'too-many-requests':
-        return 'Too many requests. Please try again later.';
+  return tr('err_too_many_requests');
       case 'operation-not-allowed':
-        return 'This sign-in method is not enabled.';
+  return tr('err_operation_not_allowed');
       default:
-        return 'An error occurred. Please try again.';
+  return tr('err_generic');
     }
   }
 }
