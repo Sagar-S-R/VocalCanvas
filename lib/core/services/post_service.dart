@@ -83,6 +83,17 @@ class PostService {
         );
   }
 
+  Stream<List<Post>> getUserPostsStream(String userId) {
+    return postsRef
+        .where('userId', isEqualTo: userId)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Post.fromFirestore(doc)).toList(),
+        );
+  }
+
   Future<List<Post>> getAllPosts() async {
     final querySnapshot =
         await postsRef.orderBy('timestamp', descending: true).get();

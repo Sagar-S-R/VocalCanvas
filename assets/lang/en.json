@@ -63,5 +63,9 @@
   "weekly_leaderboard": "Weekly Leaderboard",
   "badge_trending_creator": "Trending Creator",
   "badge_storyteller": "Storyteller",
-  "badge_community_choice": "Community Choice"
+  "badge_community_choice": "Community Choice",
+  "bio": "Bio",
+  "listen_intro": "Listen to intro",
+  "error": "Error",
+  "no_posts_yet": "No posts yet."
 }

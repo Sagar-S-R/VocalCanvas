@@ -127,7 +127,7 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
     super.initState();
     _postService = PostService();
     _audioPlayer = AudioPlayer();
-  _currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    _currentUserId = FirebaseAuth.instance.currentUser?.uid;
   }
 
   @override
@@ -139,10 +139,14 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
   String _getTitleForLanguage(BuildContext context) {
     String langCode = Localizations.localeOf(context).languageCode;
     if (langCode == 'hi') {
-      return widget.post.title_hi.isNotEmpty ? widget.post.title_hi : widget.post.title_en;
+      return widget.post.title_hi.isNotEmpty
+          ? widget.post.title_hi
+          : widget.post.title_en;
     }
     if (langCode == 'kn') {
-      return widget.post.title_kn.isNotEmpty ? widget.post.title_kn : widget.post.title_en;
+      return widget.post.title_kn.isNotEmpty
+          ? widget.post.title_kn
+          : widget.post.title_en;
     }
     return widget.post.title_en;
   }
@@ -164,8 +168,8 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
 
   Future<void> _toggleLike() async {
     // Mirror PostCard behavior but without immediate count UI; rely on re-render
-  if (_currentUserId == null) return;
-  await _postService.toggleLike(widget.post.id, _currentUserId!);
+    if (_currentUserId == null) return;
+    await _postService.toggleLike(widget.post.id, _currentUserId!);
     if (mounted) setState(() {});
   }
 
@@ -202,7 +206,7 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
 
   @override
   Widget build(BuildContext context) {
-  final theme = Theme.of(context);
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Scaffold(
@@ -320,9 +324,11 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                                 ),
                                 if (widget.post.audioUrl != null)
                                   IconButton(
-                                    icon: Icon(_isPlaying
-                                        ? Icons.pause
-                                        : Icons.volume_up_outlined),
+                                    icon: Icon(
+                                      _isPlaying
+                                          ? Icons.pause
+                                          : Icons.volume_up_outlined,
+                                    ),
                                     onPressed: _playAudio,
                                   ),
                               ],

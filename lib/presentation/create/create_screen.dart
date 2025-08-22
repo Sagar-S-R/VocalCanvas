@@ -8,6 +8,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'widgets/voice_recorder_widget.dart'; // Import the voice recorder widget
 import '../../core/services/post_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CreateScreen extends StatefulWidget {
   const CreateScreen({super.key});
@@ -138,8 +139,16 @@ class _CreateScreenState extends State<CreateScreen> {
   Future<void> _createPost() async {
     if (_content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please generate content first.')),
+        SnackBar(content: Text('please_generate_content_first'.tr())),
       );
+      return;
+    }
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('err_generic'.tr())));
       return;
     }
 
@@ -198,12 +207,12 @@ class _CreateScreenState extends State<CreateScreen> {
         imageFile: !kIsWeb && _image != null ? _image as File : null,
         webImageFile: kIsWeb && _image != null ? _image as XFile : null,
         audioBytes: _audioBytes,
-        userId: 'current_user', // Replace with actual user ID
+        userId: userId,
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post created successfully!')),
+          SnackBar(content: Text('post_created_successfully'.tr())),
         );
         Navigator.of(context).pop();
       }
@@ -211,7 +220,7 @@ class _CreateScreenState extends State<CreateScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to create post: $e')));
+        ).showSnackBar(SnackBar(content: Text('failed_to_create_post'.tr())));
       }
     } finally {
       if (mounted) {
@@ -403,9 +412,7 @@ class _CreateScreenState extends State<CreateScreen> {
                                         style:
                                             theme.textTheme.bodyLarge?.copyWith(
                                               color:
-                                                  theme
-                                                      .colorScheme
-                                                      .onSurface,
+                                                  theme.colorScheme.onSurface,
                                               fontSize: 16,
                                               height: 1.4,
                                               fontWeight: FontWeight.w400,

@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
 import '../widgets/post_detail_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,16 +47,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (userDoc.exists) {
         _user = UserModel.fromFirestore(userDoc.data()!, _userId);
       }
-      // Fetch posts
-      final allPosts = await _postService.getAllPosts();
-      final userPosts =
-          allPosts.where((post) => post.userId == _userId).toList();
-      if (mounted) {
-        setState(() {
-          _posts = userPosts;
-          _isLoading = false;
-        });
-      }
+      // Subscribe to user's posts stream for live updates
+      _postService.getUserPostsStream(_userId).listen((userPosts) {
+        if (mounted) {
+          setState(() {
+            _posts = userPosts;
+            _isLoading = false;
+          });
+        }
+      });
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -134,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 8),
                         if (_user?.email != null)
                           Text(
-                            'Email: ${_user!.email}',
+                            'email'.tr() + ': ${_user!.email}',
                             style: (theme.textTheme.bodyMedium ??
                                     const TextStyle())
                                 .copyWith(
@@ -146,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         if (_user?.bio != null && _user!.bio!.isNotEmpty)
                           Text(
-                            'Bio: ${_user!.bio}',
+                            'bio'.tr() + ': ${_user!.bio}',
                             style: (theme.textTheme.bodyMedium ??
                                     const TextStyle())
                                 .copyWith(
@@ -160,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _user!.location!.isNotEmpty &&
                             _user!.location!.toLowerCase() != 'unknown')
                           Text(
-                            'Location: ${_user!.location}',
+                            'location'.tr() + ': ${_user!.location}',
                             style:
                                 theme.textTheme.bodyMedium?.copyWith(
                                   fontSize: 16,
@@ -209,7 +209,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 },
                               ),
                               Text(
-                                'Listen to intro',
+                                'listen_intro'.tr(),
                                 style:
                                     theme.textTheme.bodyMedium?.copyWith(
                                       color:
@@ -239,9 +239,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       )
                       : _error != null
-                      ? Center(child: Text('Error: $_error'))
+                      ? Center(child: Text('${'error'.tr()}: $_error'))
                       : _posts.isEmpty
-                      ? const Center(child: Text('No posts yet.'))
+                      ? Center(child: Text('no_posts_yet'.tr()))
                       : GridView.builder(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,

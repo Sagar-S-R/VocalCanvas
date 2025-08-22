@@ -63,5 +63,9 @@
   "weekly_leaderboard": "साप्ताहिक लीडरबोर्ड",
   "badge_trending_creator": "ट्रेंडिंग क्रिएटर",
   "badge_storyteller": "कहानीकार",
-  "badge_community_choice": "कम्युनिटी चॉइस"
+  "badge_community_choice": "कम्युनिटी चॉइस",
+  "bio": "बायो",
+  "listen_intro": "इंट्रो सुनें",
+  "error": "त्रुटि",
+  "no_posts_yet": "अभी कोई पोस्ट नहीं।"
 }
