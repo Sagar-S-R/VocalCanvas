@@ -35,7 +35,7 @@ class _AuthPageState extends State<AuthPage>
   bool _isRegisterMode = false;
   bool _isLoading = false;
 
-  bool _showOtpField = false;
+  final bool _showOtpField = false;
 
   // Colors
   // Theme-aware colors will be used inside build via Theme.of(context)

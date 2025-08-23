@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui'; // Needed for ImageFilter
 import 'package:vocal_canvas/presentation/home/widgets/post_card.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -374,13 +373,17 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Treat very narrow layouts as "phone-sized" even on web
+    final double width = MediaQuery.of(context).size.width;
+    final bool isSmall = width < 700;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: <Widget>[
           // Main content area, with padding on the left to avoid the collapsed sidebar
           Padding(
-            padding: const EdgeInsets.only(left: 72),
+            // On small screens keep content nearly full-width; on wide keep room for collapsed rail
+            padding: EdgeInsets.only(left: isSmall ? 16 : 72),
             child: Stack(
               children: [
                 Center(child: _widgetOptions.elementAt(_selectedIndex)),
@@ -409,10 +412,41 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
             ),
           ),
 
+          // Small-screen launcher: a squarish icon that opens on hover (web) and also on tap (fallback)
+          if (isSmall && !_isRailExtended)
+            Positioned(
+              top: 16,
+              left: 16,
+              child: MouseRegion(
+                onEnter: (_) => setState(() => _isRailExtended = true),
+                child: GestureDetector(
+                  onTap: () => setState(() => _isRailExtended = true),
+                  child: Container(
+                    height: 56,
+                    width: 56,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.shadowColor.withOpacity(0.25),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.menu, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // Blurred overlay that appears ONLY when the sidebar is extended
           if (_isRailExtended)
             Padding(
-              padding: const EdgeInsets.only(left: 72.0),
+              padding: EdgeInsets.only(left: isSmall ? 0 : 72.0),
               child: GestureDetector(
                 onTap: () {
                   setState(() {
@@ -431,69 +465,89 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
             ),
 
           // The sidebar itself, positioned on the far left. It overlays content when extended.
-          MouseRegion(
-            onEnter: (_) => setState(() => _isRailExtended = true),
-            onExit: (_) => setState(() => _isRailExtended = false),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              width: _isRailExtended ? 250 : 72, // Animate width change
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: const BorderRadius.only(
-                  topRight: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
+          if (!isSmall)
+            MouseRegion(
+              onEnter: (_) => setState(() => _isRailExtended = true),
+              onExit: (_) => setState(() => _isRailExtended = false),
+              child: _buildSidebarContainer(
+                theme,
+                expandedWidth: 250,
+                collapsedWidth: 72,
+              ),
+            )
+          else if (_isRailExtended)
+            // On small screens, only render the full sidebar when expanded.
+            // Also collapse when the pointer leaves the sidebar (hover-out).
+            MouseRegion(
+              onExit: (_) => setState(() => _isRailExtended = false),
+              child: _buildSidebarContainer(
+                theme,
+                expandedWidth: 250,
+                collapsedWidth: 0,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarContainer(
+    ThemeData theme, {
+    required double expandedWidth,
+    required double collapsedWidth,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      width: _isRailExtended ? expandedWidth : collapsedWidth,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        borderRadius: const BorderRadius.only(
+          topRight: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(5, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          // Navigation Items
+          Expanded(
+            child: ListView(
+              children: [
+                _buildNavItem(icon: Icons.home, label: 'home'.tr(), index: 0),
+                _buildNavItem(
+                  icon: Icons.explore,
+                  label: 'explore'.tr(),
+                  index: 1,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.shadowColor.withOpacity(0.2),
-                    blurRadius: 20,
-                    offset: const Offset(5, 0),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
-                  // Navigation Items
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        _buildNavItem(
-                          icon: Icons.home,
-                          label: 'home'.tr(),
-                          index: 0,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.explore,
-                          label: 'explore'.tr(),
-                          index: 1,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.search,
-                          label: 'search'.tr(),
-                          index: 2,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.museum,
-                          label: 'exhibition'.tr(),
-                          index: 3,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.person,
-                          label: 'profile'.tr(),
-                          index: 4,
-                        ),
-                        _buildNavItem(
-                          icon: Icons.settings,
-                          label: 'settings'.tr(),
-                          index: 5,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                _buildNavItem(
+                  icon: Icons.search,
+                  label: 'search'.tr(),
+                  index: 2,
+                ),
+                _buildNavItem(
+                  icon: Icons.museum,
+                  label: 'exhibition'.tr(),
+                  index: 3,
+                ),
+                _buildNavItem(
+                  icon: Icons.person,
+                  label: 'profile'.tr(),
+                  index: 4,
+                ),
+                _buildNavItem(
+                  icon: Icons.settings,
+                  label: 'settings'.tr(),
+                  index: 5,
+                ),
+              ],
             ),
           ),
         ],

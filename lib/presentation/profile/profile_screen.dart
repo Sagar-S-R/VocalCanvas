@@ -134,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 8),
                         if (_user?.email != null)
                           Text(
-                            'email'.tr() + ': ${_user!.email}',
+                            '${'email'.tr()}: ${_user!.email}',
                             style: (theme.textTheme.bodyMedium ??
                                     const TextStyle())
                                 .copyWith(
@@ -146,7 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         if (_user?.bio != null && _user!.bio!.isNotEmpty)
                           Text(
-                            'bio'.tr() + ': ${_user!.bio}',
+                            '${'bio'.tr()}: ${_user!.bio}',
                             style: (theme.textTheme.bodyMedium ??
                                     const TextStyle())
                                 .copyWith(
@@ -160,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _user!.location!.isNotEmpty &&
                             _user!.location!.toLowerCase() != 'unknown')
                           Text(
-                            'location'.tr() + ': ${_user!.location}',
+                            '${'location'.tr()}: ${_user!.location}',
                             style:
                                 theme.textTheme.bodyMedium?.copyWith(
                                   fontSize: 16,
