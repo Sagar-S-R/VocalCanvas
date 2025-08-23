@@ -74,13 +74,74 @@ class _AuthPageState extends State<AuthPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final backgroundColor = theme.scaffoldBackgroundColor;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final showTrees = screenWidth >= 700;
     return Scaffold(
-      backgroundColor: backgroundColor,
-
+      backgroundColor: const Color.fromARGB(255,234, 227, 220),
       body: SafeArea(
         child: Stack(
           children: [
+            // Decorative images on both sides for wide screens
+            if (showTrees) ...[
+              // Existing tree.png (centered vertically on the left)
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Opacity(
+                    opacity: 0.5,
+                    child: Image.asset(
+                      'assets/tree.png',
+                      height: 700,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+              // ADDED: plant1.png (bottom left)
+              Positioned(
+                left: 230,
+                bottom: 30,
+                child: Opacity(
+                  opacity: 0.8,
+                  child: Image.asset(
+                    'assets/plant1.png',
+                    height: 225,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              // ADDED: plant2.png (top right)
+              Positioned(
+                right: 235,
+                top: 30,
+                child: Opacity(
+                  opacity: 0.8,
+                  child: Image.asset(
+                    'assets/plant2.png',
+                    height: 200,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              // Existing tree2.png (centered vertically on the right)
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Opacity(
+                    opacity: 0.5,
+                    child: Image.asset(
+                      'assets/tree2.png',
+                      height: 700,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             // Language Toggle at top-right without removing existing UI
             Positioned(top: 8, right: 8, child: _buildLanguageToggle(context)),
             Center(
@@ -147,19 +208,19 @@ class _AuthPageState extends State<AuthPage>
         },
         itemBuilder:
             (context) => [
-              PopupMenuItem(
-                value: const Locale('en'),
-                child: const Text('English'),
-              ),
-              PopupMenuItem(
-                value: const Locale('hi'),
-                child: const Text('हिंदी'),
-              ),
-              PopupMenuItem(
-                value: const Locale('kn'),
-                child: const Text('ಕನ್ನಡ'),
-              ),
-            ],
+          PopupMenuItem(
+            value: const Locale('en'),
+            child: const Text('English'),
+          ),
+          PopupMenuItem(
+            value: const Locale('hi'),
+            child: const Text('हिंदी'),
+          ),
+          PopupMenuItem(
+            value: const Locale('kn'),
+            child: const Text('ಕನ್ನಡ'),
+          ),
+        ],
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
@@ -447,20 +508,20 @@ class _AuthPageState extends State<AuthPage>
         child:
             _isLoading
                 ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Colors.white,
-                  ),
-                )
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  )
                 : Text(
-                  _isRegisterMode ? tr('create_account_button') : tr('sign_in'),
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    _isRegisterMode ? tr('create_account_button') : tr('sign_in'),
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
       ),
     );
   }
@@ -606,15 +667,15 @@ class _AuthPageState extends State<AuthPage>
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text(tr('error_title')),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(tr('ok')),
-              ),
-            ],
+        title: Text(tr('error_title')),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(tr('ok')),
           ),
+        ],
+      ),
     );
   }
 

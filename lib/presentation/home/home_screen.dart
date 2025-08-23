@@ -38,59 +38,101 @@ class HomeFeedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final theme = Theme.of(context); // Defined theme here
+    final screenWidth = MediaQuery.of(context).size.width;
+    final showTrees = screenWidth >= 700;
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(
-            maxWidth: 600,
-          ), // Constrain width like Instagram
-          child: Column(
-            children: [
-              Expanded(
-                child: StreamBuilder<List<Post>>(
-                  stream: _postService.getPostsStream(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: theme.colorScheme.primary,
-                        ),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    }
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No posts to show.'));
-                    }
-
-                    final posts = snapshot.data!;
-                    return ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 40.0),
-                      itemCount: posts.length,
-                      itemBuilder: (context, index) {
-                        final post = posts[index];
-                        return PostCard(
-                          post: post,
-                          onTap: () => _showPostDetails(context, post),
-                        );
-                      },
-                    );
-                  },
+      backgroundColor: const Color.fromARGB(255,234, 227, 220),
+      body: Stack(
+        children: [
+          if (showTrees) ...[
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Opacity(
+                  opacity: 0.5,
+                  child: Image.asset(
+                    'assets/tree3.png',
+                    height: 700,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-            ],
+            ),
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Opacity(
+                  opacity: 0.3,
+                  child: Image.asset(
+                    'assets/tree4.png',
+                    height: 700,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ],
+          Center(
+            child: Container(
+              constraints: const BoxConstraints(
+                maxWidth: 600,
+              ), // Constrain width like Instagram
+              child: Column(
+                children: [
+                  Expanded(
+                    child: StreamBuilder<List<Post>>(
+                      stream: _postService.getPostsStream(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: theme.colorScheme.primary,
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          // Corrected the string interpolation syntax
+                          return Center(
+                            child: Text('Error: ${snapshot.error}'),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('No posts to show.'));
+                        }
+
+                        final posts = snapshot.data!;
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(vertical: 40.0),
+                          itemCount: posts.length,
+                          itemBuilder: (context, index) {
+                            final post = posts[index];
+                            return PostCard(
+                              post: post,
+                              onTap: () => _showPostDetails(context, post),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
 // -----------------------------------------------------------------
-// 2. WIDGET FOR A SINGLE POST ON THE HOME FEED
+// 2. WIDGET FOR A SINGLE POST ON THE HOME FEED (This is likely redundant if PostCard is already defined elsewhere)
 // -----------------------------------------------------------------
 class HomePostCard extends StatelessWidget {
   final Post post;
@@ -166,7 +208,6 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
   }
 
   Future<void> _toggleLike() async {
-    // Mirror PostCard behavior but without immediate count UI; rely on re-render
     if (_currentUserId == null) return;
     await _postService.toggleLike(widget.post.id, _currentUserId!);
     if (mounted) setState(() {});
@@ -272,9 +313,10 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                             if (_getLocationForLanguage(context).isNotEmpty)
                               Text(
                                 _getLocationForLanguage(context),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[700],
+                                // Using theme color for better consistency
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.textTheme.bodyMedium?.color
+                                      ?.withOpacity(0.7),
                                 ),
                               ),
                             const SizedBox(height: 8),
@@ -373,16 +415,14 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Treat very narrow layouts as "phone-sized" even on web
     final double width = MediaQuery.of(context).size.width;
     final bool isSmall = width < 700;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: <Widget>[
-          // Main content area, with padding on the left to avoid the collapsed sidebar
+          // Main content area
           Padding(
-            // On small screens keep content nearly full-width; on wide keep room for collapsed rail
             padding: EdgeInsets.only(left: isSmall ? 16 : 72),
             child: Stack(
               children: [
@@ -400,9 +440,8 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                       );
                     },
                     backgroundColor: theme.colorScheme.primary,
-                    foregroundColor:
-                        theme.floatingActionButtonTheme.foregroundColor ??
-                        Colors.white,
+                    // Using theme color for FAB icon
+                    foregroundColor: theme.colorScheme.onPrimary,
                     elevation: 8.0,
                     tooltip: 'create_post'.tr(),
                     child: const Icon(Icons.add, size: 36),
@@ -412,7 +451,7 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
             ),
           ),
 
-          // Small-screen launcher: a squarish icon that opens on hover (web) and also on tap (fallback)
+          // Small-screen menu launcher
           if (isSmall && !_isRailExtended)
             Positioned(
               top: 16,
@@ -435,36 +474,36 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                         ),
                       ],
                     ),
-                    child: const Center(
-                      child: Icon(Icons.menu, color: Colors.white),
+                    child: Center(
+                      // Using theme color for menu icon
+                      child: Icon(
+                        Icons.menu,
+                        color: theme.colorScheme.onPrimary,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
 
-          // Blurred overlay that appears ONLY when the sidebar is extended
+          // Blurred overlay when sidebar is extended
           if (_isRailExtended)
             Padding(
               padding: EdgeInsets.only(left: isSmall ? 0 : 72.0),
               child: GestureDetector(
                 onTap: () {
                   setState(() {
-                    _isRailExtended = false; // Collapse the sidebar on tap
+                    _isRailExtended = false;
                   });
                 },
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                  child: Container(
-                    color: Colors.black.withOpacity(
-                      0.2,
-                    ), // Darken the background
-                  ),
+                  child: Container(color: Colors.black.withOpacity(0.2)),
                 ),
               ),
             ),
 
-          // The sidebar itself, positioned on the far left. It overlays content when extended.
+          // Sidebar
           if (!isSmall)
             MouseRegion(
               onEnter: (_) => setState(() => _isRailExtended = true),
@@ -476,8 +515,7 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
               ),
             )
           else if (_isRailExtended)
-            // On small screens, only render the full sidebar when expanded.
-            // Also collapse when the pointer leaves the sidebar (hover-out).
+            // On small screens, only render the full sidebar when expanded
             MouseRegion(
               onExit: (_) => setState(() => _isRailExtended = false),
               child: _buildSidebarContainer(
@@ -486,6 +524,7 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                 collapsedWidth: 0,
               ),
             ),
+          // REMOVED redundant code block here
         ],
       ),
     );
@@ -517,7 +556,6 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
       child: Column(
         children: [
           const SizedBox(height: 40),
-          // Navigation Items
           Expanded(
             child: ListView(
               children: [
@@ -561,11 +599,16 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
     required int index,
   }) {
     final bool isSelected = _selectedIndex == index;
+    final theme = Theme.of(context); // Get theme for onPrimary color
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.white.withOpacity(0.08) : Colors.transparent,
+        // Using theme color for selected item background
+        color:
+            isSelected
+                ? theme.colorScheme.onPrimary.withOpacity(0.08)
+                : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ClipRRect(
@@ -587,8 +630,12 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                           icon,
                           color:
                               isSelected
-                                  ? Colors.white
-                                  : Colors.white.withOpacity(0.7),
+                                  ? theme
+                                      .colorScheme
+                                      .onPrimary // Use onPrimary
+                                  : theme.colorScheme.onPrimary.withOpacity(
+                                    0.7,
+                                  ),
                           size: 24,
                         ),
                         const SizedBox(width: 12),
@@ -598,8 +645,12 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                             style: TextStyle(
                               color:
                                   isSelected
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.7),
+                                      ? theme
+                                          .colorScheme
+                                          .onPrimary // Use onPrimary
+                                      : theme.colorScheme.onPrimary.withOpacity(
+                                        0.7,
+                                      ),
                               fontWeight:
                                   isSelected
                                       ? FontWeight.w600
@@ -616,8 +667,10 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                         icon,
                         color:
                             isSelected
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.7),
+                                ? theme
+                                    .colorScheme
+                                    .onPrimary // Use onPrimary
+                                : theme.colorScheme.onPrimary.withOpacity(0.7),
                         size: 24,
                       ),
                     ),
@@ -627,6 +680,3 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
     );
   }
 }
-
-// NOTE: PostDetailView class is not included here as it wasn't in the request,
-// but your code will need it for the onTap functionality to work.
