@@ -54,6 +54,7 @@ dependencies:
   google_sign_in: ^6.2.1
   audioplayers: ^6.5.0
   flutter_gen: ^5.11.0
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -72,16 +73,17 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   assets:
-    - assets/Ceramic.jpg
-    - assets/Glass.jpg
-    - assets/Mosaic_Art.jpeg
-    - assets/Wooden_Toys.jpeg
-    - assets/tree.png
-    - assets/beige_texture.jpg
-    - assets/beige_texture2.jpg
-    - assets/google_logo.png
-    - .env
-    - assets/lang/
+  - assets/Ceramic.jpg
+  - assets/Glass.jpg
+  - assets/Mosaic_Art.jpeg
+  - assets/Wooden_Toys.jpeg
+  - assets/tree.png
+  - assets/beige_texture.jpg
+  - assets/beige_texture2.jpg
+  - assets/google_logo.png
+  - .env
+  - assets/lang/
+  - assets/logo.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

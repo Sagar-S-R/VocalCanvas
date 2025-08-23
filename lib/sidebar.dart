@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 class Sidebar extends StatefulWidget {
@@ -20,57 +21,68 @@ class _SidebarState extends State<Sidebar> {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: Duration(milliseconds: 200),
-        width: _isHovered ? 180 : 60,
-        decoration: BoxDecoration(
-          color:
-              Theme.of(context).appBarTheme.backgroundColor ??
-              Theme.of(context).primaryColor,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children:
-              items
-                  .map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20.0),
-                      child: Row(
-                        children: [
-                          SizedBox(width: 16),
-                          Icon(
-                            item.icon,
-                            color:
-                                Theme.of(context).iconTheme.color ??
-                                Colors.white,
-                            size: 28,
-                          ),
-                          if (_isHovered) ...[
-                            SizedBox(width: 16),
-                            Text(
+    final isMobile = !kIsWeb && MediaQuery.of(context).size.width < 600;
+    final shouldExpandOnHover =
+        kIsWeb || MediaQuery.of(context).size.width >= 900;
+
+    final expanded = shouldExpandOnHover ? _isHovered : !isMobile;
+
+    final bg =
+        Theme.of(context).appBarTheme.backgroundColor ??
+        Theme.of(context).primaryColor;
+    final iconColor = Theme.of(context).iconTheme.color ?? Colors.white;
+    final textColor =
+        Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
+
+    Widget content = AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      width: expanded ? 200 : 56,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children:
+            items
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14.0),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        Icon(item.icon, color: iconColor, size: 24),
+                        if (expanded) ...[
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Text(
                               item.label,
-                              style: TextStyle(
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium?.color ??
-                                    Colors.white,
-                                fontSize: 18,
-                              ),
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: textColor, fontSize: 16),
                             ),
-                          ],
+                          ),
+                        ] else ...[
+                          // Compact: show tooltip on hover/long-press
+                          const SizedBox.shrink(),
                         ],
-                      ),
+                      ],
                     ),
-                  )
-                  .toList(),
-        ),
+                  ),
+                )
+                .toList(),
       ),
     );
+
+    if (shouldExpandOnHover) {
+      content = MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: content,
+      );
+    }
+
+    return content;
   }
 }
 

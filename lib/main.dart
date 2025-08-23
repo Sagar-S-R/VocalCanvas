@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart'; // <-- Import dotenv
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'presentation/home/home_screen.dart'; // Import your home screen
+import 'presentation/splash/splash_screen.dart';
 import 'package:vocal_canvas/presentation/auth/auth_page.dart' as auth;
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -157,11 +158,12 @@ class VocalCanvasApp extends StatelessWidget {
         ).copyWith(brightness: Brightness.dark),
       ),
       debugShowCheckedModeBanner: false,
-      // Use an auth gate as the home so reloads always reflect current auth state
-      home: const AuthGate(),
+      // Start with a splash screen that navigates to Auth
+      home: const SplashScreen(),
       routes: {
         '/auth': (context) => auth.AuthPage(),
         '/home': (context) => const VocalCanvasHomePage(),
+        '/splash': (context) => const SplashScreen(),
       },
     );
   }
