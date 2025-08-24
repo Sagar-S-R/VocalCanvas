@@ -67,7 +67,7 @@ class HomeFeedScreen extends StatelessWidget {
               bottom: 0,
               child: Center(
                 child: Opacity(
-                  opacity: 0.3,
+                  opacity: 0.5,
                   child: Image.asset(
                     'assets/tree4.png',
                     height: 700,

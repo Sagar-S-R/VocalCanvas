@@ -99,7 +99,6 @@ class _AuthPageState extends State<AuthPage>
                   ),
                 ),
               ),
-              // ADDED: plant1.png (bottom left)
               Positioned(
                 left: 230,
                 bottom: 30,
@@ -112,7 +111,6 @@ class _AuthPageState extends State<AuthPage>
                   ),
                 ),
               ),
-              // ADDED: plant2.png (top right)
               Positioned(
                 right: 235,
                 top: 30,
