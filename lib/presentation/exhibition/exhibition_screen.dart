@@ -1,46 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-
-// A simple data model for a leaderboard entry.
-class Artisan {
-  final String name;
-  final String imageUrl;
-  final String craft;
-  final int rank;
-  final List<String> badges;
-
-  Artisan({
-    required this.name,
-    required this.imageUrl,
-    required this.craft,
-    required this.rank,
-    this.badges = const [],
-  });
-}
-
-// Placeholder data for the leaderboard.
-final List<Artisan> topArtisans = [
-  Artisan(
-    name: 'Priya Sharma',
-    imageUrl: 'assets/Mosaic_Art.jpeg',
-    craft: 'Mosaic Art',
-    rank: 1,
-    badges: ['Trending Creator', 'Storyteller'],
-  ),
-  Artisan(
-    name: 'Rohan Mehta',
-    imageUrl: 'assets/Glass.jpg',
-    craft: 'Glass Blower',
-    rank: 2,
-    badges: ['Community Choice'],
-  ),
-  Artisan(
-    name: 'Anjali Verma',
-    imageUrl: 'assets/Wooden_Toys.jpeg',
-    craft: 'Woodcraft',
-    rank: 3,
-  ),
-];
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../data/models/post.dart';
 
 class ExhibitionScreen extends StatelessWidget {
   const ExhibitionScreen({super.key});
@@ -50,6 +11,7 @@ class ExhibitionScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final width = MediaQuery.of(context).size.width;
     final horizontalPadding = width > 800 ? 80.0 : 24.0;
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SingleChildScrollView(
@@ -60,9 +22,9 @@ class ExhibitionScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Responsive title: allow it to wrap/scale to avoid overflow
+            // Responsive title
             ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 900),
+              constraints: const BoxConstraints(maxWidth: 900),
               child: FittedBox(
                 alignment: Alignment.centerLeft,
                 fit: BoxFit.scaleDown,
@@ -89,15 +51,69 @@ class ExhibitionScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
 
-            // Leaderboard Section
-            _buildSectionHeader(context, 'weekly_leaderboard'.tr()),
+            // Top Posts Section
+            _buildSectionHeader(context, 'Top Posts'),
             const SizedBox(height: 20),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: topArtisans.length,
-              itemBuilder: (context, index) {
-                return _buildLeaderboardTile(context, topArtisans[index]);
+
+            // Firestore Stream Builder
+            StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('posts')
+                      .orderBy('likes', descending: true)
+                      .limit(10)
+                      .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return _buildErrorWidget(context, snapshot.error.toString());
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return _buildLoadingWidget(context);
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return _buildEmptyWidget(context);
+                }
+
+                // If Firestore can't order by the length of the 'likes' array,
+                // sort on the client as a fallback. If you add a numeric
+                // 'likesCount' field to documents you can order on the server
+                // instead which is more efficient for large datasets.
+                final docs = snapshot.data!.docs.toList();
+
+                docs.sort((a, b) {
+                  final aData = a.data() as Map<String, dynamic>;
+                  final bData = b.data() as Map<String, dynamic>;
+
+                  final aLikesCount =
+                      aData['likesCount'] is int
+                          ? aData['likesCount'] as int
+                          : (aData['likes'] is List
+                              ? (aData['likes'] as List).length
+                              : 0);
+                  final bLikesCount =
+                      bData['likesCount'] is int
+                          ? bData['likesCount'] as int
+                          : (bData['likes'] is List
+                              ? (bData['likes'] as List).length
+                              : 0);
+
+                  // Descending order
+                  return bLikesCount.compareTo(aLikesCount);
+                });
+
+                final posts =
+                    docs.map((doc) => Post.fromFirestore(doc)).toList();
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: posts.length,
+                  itemBuilder: (context, index) {
+                    return _buildPostCard(context, posts[index], index + 1);
+                  },
+                );
               },
             ),
           ],
@@ -106,7 +122,6 @@ class ExhibitionScreen extends StatelessWidget {
     );
   }
 
-  // Helper for section headers
   Widget _buildSectionHeader(BuildContext context, String title) {
     final theme = Theme.of(context);
     return Text(
@@ -123,85 +138,858 @@ class ExhibitionScreen extends StatelessWidget {
     );
   }
 
-  // Helper for the leaderboard list tiles
-  Widget _buildLeaderboardTile(BuildContext context, Artisan artisan) {
+  Widget _buildPostCard(BuildContext context, Post post, int rank) {
     final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      elevation: 0,
-      color: theme.cardColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
+    final width = MediaQuery.of(context).size.width;
+    final isLargeScreen = width > 600;
+    final locale = context.locale.languageCode;
+
+    // Get localized content
+    final title = _getLocalizedTitle(post, locale);
+    final content = _getLocalizedContent(post, locale);
+    final location = _getLocalizedLocation(post, locale);
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => PostDetailScreen(post: post)),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 20.0),
+        elevation: 0,
+        color: theme.cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '#${artisan.rank}',
-              style: TextStyle(
-                color: theme.colorScheme.secondary,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            // Post Image
+            if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
+                    child: AspectRatio(
+                      aspectRatio: isLargeScreen ? 16 / 9 : 4 / 3,
+                      child: Image.network(
+                        post.imageUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: theme.colorScheme.surface,
+                            child: Icon(
+                              Icons.image_not_supported,
+                              size: 48,
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.5,
+                              ),
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: theme.colorScheme.surface,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  // Rank badge
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getRankColor(rank).withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '#$rank',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Audio indicator
+                  if (post.audioUrl != null && post.audioUrl!.isNotEmpty)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.volume_up,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+
+            // Post Content
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color:
+                          theme.textTheme.headlineSmall?.color ?? Colors.black,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Lora',
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Content preview
+                  if (content.isNotEmpty)
+                    Text(
+                      content,
+                      style: TextStyle(
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.8,
+                        ),
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  const SizedBox(height: 12),
+
+                  // Location (if available)
+                  if (location != null && location.isNotEmpty)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: theme.colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          location,
+                          style: TextStyle(
+                            color: theme.colorScheme.secondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 8),
+
+                  // Hashtags
+                  if (post.hashtags.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children:
+                          post.hashtags.take(3).map((hashtag) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondary.withOpacity(
+                                  0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '#$hashtag',
+                                style: TextStyle(
+                                  color: theme.colorScheme.secondary,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                    ),
+                  const SizedBox(height: 12),
+
+                  // Bottom row with likes and comments
+                  Row(
+                    children: [
+                      Icon(Icons.favorite, size: 16, color: Colors.red[400]),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatCount(post.likes.length),
+                        style: TextStyle(
+                          color: theme.textTheme.bodyMedium?.color,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Icon(
+                        Icons.comment_outlined,
+                        size: 16,
+                        color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                          0.7,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatCount(post.commentsCount),
+                        style: TextStyle(
+                          color: theme.textTheme.bodyMedium?.color?.withOpacity(
+                            0.7,
+                          ),
+                          fontSize: 14,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _formatTimestamp(post.timestamp),
+                        style: TextStyle(
+                          color: theme.textTheme.bodySmall?.color?.withOpacity(
+                            0.6,
+                          ),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 20),
-            CircleAvatar(
-              radius: 30,
-              backgroundImage: AssetImage(artisan.imageUrl),
-            ),
-            const SizedBox(width: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  artisan.name,
-                  style: TextStyle(
-                    color: theme.textTheme.bodyLarge?.color ?? Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  artisan.craft,
-                  style: TextStyle(
-                    color:
-                        theme.textTheme.bodyMedium?.color?.withOpacity(0.8) ??
-                        Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            if (artisan.badges.isNotEmpty)
-              Row(
-                children:
-                    artisan.badges
-                        .map((badge) => _buildBadgeChip(context, badge))
-                        .toList(),
-              ),
           ],
         ),
       ),
     );
   }
 
-  // Helper for the badge chips
-  Widget _buildBadgeChip(BuildContext context, String label) {
+  Widget _buildLoadingWidget(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(left: 8.0),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: theme.colorScheme.secondary,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
+    return SizedBox(
+      height: 200,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: theme.colorScheme.secondary),
+            const SizedBox(height: 16),
+            Text(
+              'Loading amazing posts...',
+              style: TextStyle(
+                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildErrorWidget(BuildContext context, String error) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+          const SizedBox(height: 16),
+          Text(
+            'Something went wrong',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.headlineSmall?.color,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Unable to load posts. Please try again later.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyWidget(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Icon(
+            Icons.image_outlined,
+            size: 48,
+            color: theme.textTheme.bodyMedium?.color?.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No posts yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: theme.textTheme.headlineSmall?.color,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Be the first to share your amazing artwork!',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper methods for localization
+  String _getLocalizedTitle(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
+      case 'kn':
+        return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
+      default:
+        return post.title_en;
+    }
+  }
+
+  String _getLocalizedContent(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.content_hi.isNotEmpty ? post.content_hi : post.content_en;
+      case 'kn':
+        return post.content_kn.isNotEmpty ? post.content_kn : post.content_en;
+      default:
+        return post.content_en;
+    }
+  }
+
+  String? _getLocalizedLocation(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.location_hi?.isNotEmpty == true
+            ? post.location_hi
+            : post.location_en;
+      case 'kn':
+        return post.location_kn?.isNotEmpty == true
+            ? post.location_kn
+            : post.location_en;
+      default:
+        return post.location_en;
+    }
+  }
+
+  Color _getRankColor(int rank) {
+    switch (rank) {
+      case 1:
+        return const Color(0xFFFFD700); // Gold
+      case 2:
+        return const Color(0xFFC0C0C0); // Silver
+      case 3:
+        return const Color(0xFFCD7F32); // Bronze
+      default:
+        return const Color(0xFF6366F1); // Indigo
+    }
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Now';
+    }
+  }
+}
+
+// Post Detail Screen
+class PostDetailScreen extends StatefulWidget {
+  final Post post;
+
+  const PostDetailScreen({super.key, required this.post});
+
+  @override
+  State<PostDetailScreen> createState() => _PostDetailScreenState();
+}
+
+class _PostDetailScreenState extends State<PostDetailScreen> {
+  bool isLiked = false;
+  late List<String> currentLikes;
+
+  @override
+  void initState() {
+    super.initState();
+    currentLikes = List.from(widget.post.likes);
+    // TODO: Check if current user has liked this post
+    // isLiked = currentLikes.contains(currentUserId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final locale = context.locale.languageCode;
+
+    // Get localized content
+    final title = _getLocalizedTitle(widget.post, locale);
+    final content = _getLocalizedContent(widget.post, locale);
+    final caption = _getLocalizedCaption(widget.post, locale);
+    final location = _getLocalizedLocation(widget.post, locale);
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          // App Bar with image
+          if (widget.post.imageUrl != null && widget.post.imageUrl!.isNotEmpty)
+            SliverAppBar(
+              expandedHeight: 300,
+              floating: false,
+              pinned: true,
+              backgroundColor: theme.appBarTheme.backgroundColor,
+              foregroundColor: theme.appBarTheme.foregroundColor,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      widget.post.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: theme.colorScheme.surface,
+                          child: Icon(
+                            Icons.image_not_supported,
+                            size: 64,
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          ),
+                        );
+                      },
+                    ),
+                    // Audio indicator overlay
+                    if (widget.post.audioUrl != null &&
+                        widget.post.audioUrl!.isNotEmpty)
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: const Icon(
+                            Icons.play_circle_outline,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Content
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Lora',
+                      color: theme.textTheme.headlineLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Engagement info
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.favorite,
+                              size: 18,
+                              color: Colors.red[400],
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _formatCount(currentLikes.length),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.comment_outlined,
+                              size: 18,
+                              color: theme.colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _formatCount(widget.post.commentsCount),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _formatTimestamp(widget.post.timestamp),
+                        style: TextStyle(
+                          color: theme.textTheme.bodySmall?.color?.withOpacity(
+                            0.6,
+                          ),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Location
+                  if (location != null && location.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          color: theme.colorScheme.secondary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          location,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Content
+                  if (content.isNotEmpty) ...[
+                    Text(
+                      'Content',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.headlineSmall?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      content,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Caption
+                  if (caption != null && caption.isNotEmpty) ...[
+                    Text(
+                      'Caption',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.headlineSmall?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      caption,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Hashtags
+                  if (widget.post.hashtags.isNotEmpty) ...[
+                    Text(
+                      'Tags',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.headlineSmall?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children:
+                          widget.post.hashtags.map((hashtag) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondary.withOpacity(
+                                  0.1,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                '#$hashtag',
+                                style: TextStyle(
+                                  color: theme.colorScheme.secondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+
+                  // Like button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _toggleLike,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            isLiked
+                                ? Colors.red[400]
+                                : theme.colorScheme.secondary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: Icon(
+                        isLiked ? Icons.favorite : Icons.favorite_outline,
+                      ),
+                      label: Text(
+                        isLiked ? 'Liked' : 'Like this post',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _toggleLike() {
+    setState(() {
+      if (isLiked) {
+        // TODO: Remove current user ID from likes
+        // currentLikes.remove(currentUserId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Post unliked! (Feature coming soon)'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        // TODO: Add current user ID to likes
+        // currentLikes.add(currentUserId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Post liked! (Feature coming soon)'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      isLiked = !isLiked;
+    });
+
+    // TODO: Update Firestore with new likes array
+    // FirebaseFirestore.instance
+    //     .collection('posts')
+    //     .doc(widget.post.id)
+    //     .update({'likes': currentLikes});
+  }
+
+  // Helper methods for localization
+  String _getLocalizedTitle(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
+      case 'kn':
+        return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
+      default:
+        return post.title_en;
+    }
+  }
+
+  String _getLocalizedContent(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.content_hi.isNotEmpty ? post.content_hi : post.content_en;
+      case 'kn':
+        return post.content_kn.isNotEmpty ? post.content_kn : post.content_en;
+      default:
+        return post.content_en;
+    }
+  }
+
+  String? _getLocalizedCaption(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.caption_hi?.isNotEmpty == true
+            ? post.caption_hi
+            : post.caption_en;
+      case 'kn':
+        return post.caption_kn?.isNotEmpty == true
+            ? post.caption_kn
+            : post.caption_en;
+      default:
+        return post.caption_en;
+    }
+  }
+
+  String? _getLocalizedLocation(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.location_hi?.isNotEmpty == true
+            ? post.location_hi
+            : post.location_en;
+      case 'kn':
+        return post.location_kn?.isNotEmpty == true
+            ? post.location_kn
+            : post.location_en;
+      default:
+        return post.location_en;
+    }
+  }
+
+  String _formatCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Now';
+    }
   }
 }
