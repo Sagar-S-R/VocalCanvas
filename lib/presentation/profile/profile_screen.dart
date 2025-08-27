@@ -12,7 +12,8 @@ import '../widgets/post_detail_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final String? userId;
+  const ProfileScreen({super.key, this.userId});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -21,7 +22,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen>
     with TickerProviderStateMixin {
   final PostService _postService = PostService();
-  final String _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
   UserModel? _user;
   List<Post> _posts = [];
   bool _isLoading = true;
@@ -29,6 +29,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isPlaying = false;
   late TabController _tabController;
+
+  String get _resolvedUserId =>
+      widget.userId ?? (FirebaseAuth.instance.currentUser?.uid ?? '');
 
   @override
   void initState() {
@@ -52,10 +55,10 @@ class _ProfileScreenState extends State<ProfileScreen>
       final userDoc =
           await FirebaseFirestore.instance
               .collection('users')
-              .doc(_userId)
+              .doc(_resolvedUserId)
               .get();
       if (userDoc.exists) {
-        _user = UserModel.fromFirestore(userDoc.data()!, _userId);
+        _user = UserModel.fromFirestore(userDoc.data()!, _resolvedUserId);
       }
       if (mounted) {
         setState(() {
@@ -63,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         });
       }
       // Subscribe to user's posts stream for live updates
-      _postService.getUserPostsStream(_userId).listen((userPosts) {
+      _postService.getUserPostsStream(_resolvedUserId).listen((userPosts) {
         if (mounted) {
           setState(() {
             _posts = userPosts;
@@ -232,19 +235,10 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                         // Location (multilingual) if available
                         if (_localizedLocation(
-                                  _user,
-                                  context.locale.languageCode,
-                                ) !=
-                                null &&
-                            _localizedLocation(
                               _user,
                               context.locale.languageCode,
-                            )!.isNotEmpty &&
-                            _localizedLocation(
-                                  _user,
-                                  context.locale.languageCode,
-                                )!.toLowerCase() !=
-                                'unknown')
+                            ) !=
+                            null)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
@@ -318,14 +312,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
 
                         const SizedBox(height: 16),
-
-                        // Posts count
-                        Text(
-                          '${_posts.length} ${'posts'.tr()}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -397,14 +383,31 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   String? _localizedLocation(UserModel? user, String locale) {
     if (user == null) return null;
+    String? raw;
     switch (locale) {
       case 'hi':
-        return user.location_hi ?? user.location_en;
+        raw = user.location_hi ?? user.location_en;
+        break;
       case 'kn':
-        return user.location_kn ?? user.location_en;
+        raw = user.location_kn ?? user.location_en;
+        break;
       default:
-        return user.location_en;
+        raw = user.location_en;
     }
+    return _cleanLocation(raw);
+  }
+
+  String? _cleanLocation(String? value) {
+    if (value == null) return null;
+    final v = value.trim();
+    if (v.isEmpty) return null;
+    final lower = v.toLowerCase();
+    // Treat any form of unknown across locales as unavailable
+    const unknowns = {'unknown', 'पता नहीं', 'ಗೊತ್ತಿಲ್ಲ'};
+    if (unknowns.contains(lower) || unknowns.contains(v)) return null;
+    // If value is suspiciously long, skip showing to avoid junk
+    if (v.length > 80) return null;
+    return v;
   }
 
   Widget _buildPostsGrid() {

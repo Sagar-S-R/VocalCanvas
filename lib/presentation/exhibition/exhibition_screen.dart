@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models/post.dart';
+import '../profile/profile_screen.dart';
 
 class ExhibitionScreen extends StatelessWidget {
   const ExhibitionScreen({super.key});
@@ -706,9 +707,9 @@ class _WheelPostCard extends StatelessWidget {
     final theme = Theme.of(context);
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => PostDetailScreen(post: post)),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => PostDetailScreen(post: post)));
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -716,12 +717,10 @@ class _WheelPostCard extends StatelessWidget {
           children: [
             // Image background
             Positioned.fill(
-              child: post.imageUrl != null && post.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      post.imageUrl!,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(color: theme.colorScheme.surfaceVariant),
+              child:
+                  post.imageUrl != null && post.imageUrl!.isNotEmpty
+                      ? Image.network(post.imageUrl!, fit: BoxFit.cover)
+                      : Container(color: theme.colorScheme.surfaceVariant),
             ),
 
             // Rank badge top-left
@@ -729,14 +728,20 @@ class _WheelPostCard extends StatelessWidget {
               top: 12,
               left: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text(
                   '#$rank',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -793,18 +798,34 @@ class _WheelPostCard extends StatelessWidget {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        const Icon(Icons.favorite, color: Colors.pinkAccent, size: 18),
+                        const Icon(
+                          Icons.favorite,
+                          color: Colors.pinkAccent,
+                          size: 18,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           _formatCountLocal(post.likes.length),
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(width: 16),
-                        const Icon(Icons.chat_bubble_outline, color: Colors.white70, size: 18),
+                        const Icon(
+                          Icons.chat_bubble_outline,
+                          color: Colors.white70,
+                          size: 18,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           _formatCountLocal(post.commentsCount),
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -817,6 +838,7 @@ class _WheelPostCard extends StatelessWidget {
       ),
     );
   }
+
   String _formatCountLocal(int count) {
     if (count >= 1000000) {
       return '${(count / 1000000).toStringAsFixed(1)}M';
@@ -912,7 +934,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       },
                     ),
                     // Audio play/pause overlay
-                    if (widget.post.audioUrl != null && widget.post.audioUrl!.isNotEmpty)
+                    if (widget.post.audioUrl != null &&
+                        widget.post.audioUrl!.isNotEmpty)
                       Positioned(
                         bottom: 16,
                         right: 16,
@@ -926,7 +949,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               borderRadius: BorderRadius.circular(30),
                             ),
                             child: Icon(
-                              _isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline,
+                              _isPlaying
+                                  ? Icons.pause_circle_outline
+                                  : Icons.play_circle_outline,
                               color: Colors.white,
                               size: 24,
                             ),
@@ -1023,8 +1048,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         icon: const Icon(Icons.add_comment_outlined, size: 18),
                         label: const Text('Comment'),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                         ),
                       ),
                       const Spacer(),
@@ -1177,6 +1207,29 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder:
+                                (_) =>
+                                    ProfileScreen(userId: widget.post.userId),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.person_outline),
+                      label: const Text('Visit Profile'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1196,7 +1249,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return;
     }
 
-    final docRef = FirebaseFirestore.instance.collection('posts').doc(widget.post.id);
+    final docRef = FirebaseFirestore.instance
+        .collection('posts')
+        .doc(widget.post.id);
     await FirebaseFirestore.instance.runTransaction((txn) async {
       final snap = await txn.get(docRef);
       final data = snap.data() as Map<String, dynamic>;
@@ -1206,13 +1261,21 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         likes.remove(user.uid);
         txn.update(docRef, {
           'likes': likes,
-          'likesCount': (data['likesCount'] is int ? data['likesCount'] as int : likes.length + 1) - 1,
+          'likesCount':
+              (data['likesCount'] is int
+                  ? data['likesCount'] as int
+                  : likes.length + 1) -
+              1,
         });
       } else {
         likes.add(user.uid);
         txn.update(docRef, {
           'likes': likes,
-          'likesCount': (data['likesCount'] is int ? data['likesCount'] as int : likes.length - 1) + 1,
+          'likesCount':
+              (data['likesCount'] is int
+                  ? data['likesCount'] as int
+                  : likes.length - 1) +
+              1,
         });
       }
       if (mounted) {
@@ -1255,7 +1318,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Add a comment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              const Text(
+                'Add a comment',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
@@ -1275,17 +1341,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     if (text.isEmpty) return;
                     final user = await _ensureUser();
                     if (user == null) return;
-                    final postRef = FirebaseFirestore.instance.collection('posts').doc(widget.post.id);
+                    final postRef = FirebaseFirestore.instance
+                        .collection('posts')
+                        .doc(widget.post.id);
                     await postRef.collection('comments').add({
                       'text': text,
                       'userId': user.uid,
                       'timestamp': FieldValue.serverTimestamp(),
                     });
-                    await postRef.update({'commentsCount': FieldValue.increment(1)});
+                    await postRef.update({
+                      'commentsCount': FieldValue.increment(1),
+                    });
                     if (mounted) {
                       setState(() => _commentCount += 1);
                       Navigator.of(ctx).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Comment added')));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Comment added')),
+                      );
                     }
                   },
                   icon: const Icon(Icons.send),

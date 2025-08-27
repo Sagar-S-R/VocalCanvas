@@ -108,7 +108,10 @@ class HomeFeedScreen extends StatelessWidget {
 
                         final posts = snapshot.data!;
                         return ListView.builder(
-                          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 40.0,
+                            horizontal: 16.0,
+                          ),
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
                             final post = posts[index];
@@ -282,7 +285,7 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final isSmall = constraints.maxWidth < 800;
-                    
+
                     if (isSmall) {
                       // Mobile layout: Column with image on top, details below
                       return Column(
@@ -321,21 +324,26 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                                 children: [
                                   Text(
                                     _getTitleForLanguage(context),
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ) ?? const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style:
+                                        theme.textTheme.titleLarge?.copyWith(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ) ??
+                                        const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
                                   const SizedBox(height: 8),
-                                  if (_getLocationForLanguage(context).isNotEmpty)
+                                  if (_getLocationForLanguage(
+                                    context,
+                                  ).isNotEmpty)
                                     Text(
                                       _getLocationForLanguage(context),
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: theme.colorScheme.primary,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: theme.colorScheme.primary,
+                                          ),
                                     ),
                                   const SizedBox(height: 16),
                                   Expanded(
@@ -352,9 +360,12 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                                       IconButton(
                                         icon: Icon(
                                           Icons.favorite,
-                                          color: widget.post.likes.contains(_currentUserId)
-                                              ? Colors.red
-                                              : theme.iconTheme.color,
+                                          color:
+                                              widget.post.likes.contains(
+                                                    _currentUserId,
+                                                  )
+                                                  ? Colors.red
+                                                  : theme.iconTheme.color,
                                         ),
                                         onPressed: _toggleLike,
                                       ),
@@ -369,11 +380,41 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                                       if (widget.post.audioUrl != null)
                                         IconButton(
                                           icon: Icon(
-                                            _isPlaying ? Icons.pause : Icons.play_arrow,
+                                            _isPlaying
+                                                ? Icons.pause
+                                                : Icons.play_arrow,
                                           ),
                                           onPressed: _playAudio,
                                         ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => ProfileScreen(
+                                                  userId: widget.post.userId,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.person_outline),
+                                      label: const Text('Visit Profile'),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -399,12 +440,13 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                                   fit: BoxFit.cover,
                                   height: double.infinity,
                                   errorBuilder:
-                                      (context, error, stackTrace) => const Center(
-                                        child: Icon(
-                                          Icons.image_not_supported,
-                                          size: 50,
-                                        ),
-                                      ),
+                                      (context, error, stackTrace) =>
+                                          const Center(
+                                            child: Icon(
+                                              Icons.image_not_supported,
+                                              size: 50,
+                                            ),
+                                          ),
                                 ),
                               ),
                             ),
@@ -418,21 +460,26 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                                 children: [
                                   Text(
                                     _getTitleForLanguage(context),
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ) ?? const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style:
+                                        theme.textTheme.titleLarge?.copyWith(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ) ??
+                                        const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
                                   const SizedBox(height: 8),
-                                  if (_getLocationForLanguage(context).isNotEmpty)
+                                  if (_getLocationForLanguage(
+                                    context,
+                                  ).isNotEmpty)
                                     Text(
                                       _getLocationForLanguage(context),
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: theme.colorScheme.primary,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: theme.colorScheme.primary,
+                                          ),
                                     ),
                                   const SizedBox(height: 16),
                                   Expanded(
@@ -449,9 +496,12 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                                       IconButton(
                                         icon: Icon(
                                           Icons.favorite,
-                                          color: widget.post.likes.contains(_currentUserId)
-                                              ? Colors.red
-                                              : theme.iconTheme.color,
+                                          color:
+                                              widget.post.likes.contains(
+                                                    _currentUserId,
+                                                  )
+                                                  ? Colors.red
+                                                  : theme.iconTheme.color,
                                         ),
                                         onPressed: _toggleLike,
                                       ),
@@ -466,11 +516,41 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                                       if (widget.post.audioUrl != null)
                                         IconButton(
                                           icon: Icon(
-                                            _isPlaying ? Icons.pause : Icons.play_arrow,
+                                            _isPlaying
+                                                ? Icons.pause
+                                                : Icons.play_arrow,
                                           ),
                                           onPressed: _playAudio,
                                         ),
                                     ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => ProfileScreen(
+                                                  userId: widget.post.userId,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.person_outline),
+                                      label: const Text('Visit Profile'),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 14,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -512,13 +592,13 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
     const SettingsScreen(),
   ];
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final double width = MediaQuery.of(context).size.width;
-    final bool isSmall = width < 800; // Increased breakpoint for better mobile experience
-    
+    final bool isSmall =
+        width < 800; // Increased breakpoint for better mobile experience
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
@@ -564,11 +644,19 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                           child: GestureDetector(
                             onTap: () => setState(() => _selectedIndex = 3),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
-                                color: _selectedIndex == 3 
-                                    ? theme.colorScheme.primary.withOpacity(0.9)
-                                    : theme.colorScheme.surface.withOpacity(0.9),
+                                color:
+                                    _selectedIndex == 3
+                                        ? theme.colorScheme.primary.withOpacity(
+                                          0.9,
+                                        )
+                                        : theme.colorScheme.surface.withOpacity(
+                                          0.9,
+                                        ),
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
@@ -583,24 +671,27 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                                 children: [
                                   CircleAvatar(
                                     radius: 14,
-                                    backgroundColor: _selectedIndex == 3 
-                                        ? theme.colorScheme.onPrimary
-                                        : theme.colorScheme.primary,
+                                    backgroundColor:
+                                        _selectedIndex == 3
+                                            ? theme.colorScheme.onPrimary
+                                            : theme.colorScheme.primary,
                                     child: Icon(
                                       Icons.person,
                                       size: 16,
-                                      color: _selectedIndex == 3 
-                                          ? theme.colorScheme.primary
-                                          : theme.colorScheme.onPrimary,
+                                      color:
+                                          _selectedIndex == 3
+                                              ? theme.colorScheme.primary
+                                              : theme.colorScheme.onPrimary,
                                     ),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'profile'.tr(),
                                     style: TextStyle(
-                                      color: _selectedIndex == 3 
-                                          ? theme.colorScheme.onPrimary
-                                          : theme.colorScheme.onSurface,
+                                      color:
+                                          _selectedIndex == 3
+                                              ? theme.colorScheme.onPrimary
+                                              : theme.colorScheme.onSurface,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 12,
                                     ),
@@ -655,17 +746,20 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
             ),
         ],
       ),
-      
+
       // Bottom Navigation Bar for Mobile
-      bottomNavigationBar: isSmall ? CustomBottomNavigationBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        onMoreTapped: () => setState(() => _isRailExtended = true),
-      ) : null,
+      bottomNavigationBar:
+          isSmall
+              ? CustomBottomNavigationBar(
+                selectedIndex: _selectedIndex,
+                onItemTapped: (index) {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                },
+                onMoreTapped: () => setState(() => _isRailExtended = true),
+              )
+              : null,
     );
   }
 
@@ -813,5 +907,4 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
       ),
     );
   }
-
 }

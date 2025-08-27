@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../data/models/post.dart';
+import '../profile/profile_screen.dart';
 
 class PostDetailScreen extends StatelessWidget {
   final Post post;
+  final EdgeInsets? outerPadding;
 
-  const PostDetailScreen({super.key, required this.post});
+  const PostDetailScreen({super.key, required this.post, this.outerPadding});
 
   String _getLocationForLanguage(BuildContext context) {
     String langCode = Localizations.localeOf(context).languageCode;
@@ -22,10 +24,7 @@ class PostDetailScreen extends StatelessWidget {
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: theme.colorScheme.onSurface,
-          ),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -38,7 +37,7 @@ class PostDetailScreen extends StatelessWidget {
         centerTitle: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: outerPadding ?? const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -47,26 +46,29 @@ class PostDetailScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: AspectRatio(
                 aspectRatio: 1.0,
-                child: post.imageUrl != null
-                    ? Image.network(
-                        post.imageUrl!,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      )
-                    : Container(
-                        color: theme.colorScheme.surface,
-                        child: Center(
-                          child: Icon(
-                            Icons.image_outlined,
-                            size: 64,
-                            color: theme.colorScheme.onSurface.withOpacity(0.3),
+                child:
+                    post.imageUrl != null
+                        ? Image.network(
+                          post.imageUrl!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        )
+                        : Container(
+                          color: theme.colorScheme.surface,
+                          child: Center(
+                            child: Icon(
+                              Icons.image_outlined,
+                              size: 64,
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.3,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Post Title
             Text(
               (() {
@@ -81,7 +83,7 @@ class PostDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            
+
             // Location
             if (_getLocationForLanguage(context).isNotEmpty &&
                 _getLocationForLanguage(context) != 'Unknown')
@@ -104,96 +106,104 @@ class PostDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
-            
+
             // Description
             Text(
               'About this artwork',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-              ) ?? TextStyle(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-                fontSize: 16,
-              ),
+              style:
+                  theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ) ??
+                  TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 16,
+                  ),
             ),
             const SizedBox(height: 8),
             Text(
               _getFormattedDescription(
                 (() {
-                  String langCode = Localizations.localeOf(context).languageCode;
+                  String langCode =
+                      Localizations.localeOf(context).languageCode;
                   if (langCode == 'hi') return post.content_hi;
                   if (langCode == 'kn') return post.content_kn;
                   return post.content_en;
                 })(),
               ),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
-                height: 1.5,
-              ) ?? TextStyle(
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
-                height: 1.5,
-                fontSize: 14,
-              ),
+              style:
+                  theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                    height: 1.5,
+                  ) ??
+                  TextStyle(
+                    color: theme.colorScheme.onSurface.withOpacity(0.8),
+                    height: 1.5,
+                    fontSize: 14,
+                  ),
             ),
             const SizedBox(height: 20),
-            
+
             // Tags
             if (post.hashtags.isNotEmpty) ...[
               Text(
                 'Tags',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                ) ?? TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 16,
-                ),
+                style:
+                    theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ) ??
+                    TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                      fontSize: 16,
+                    ),
               ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: post.hashtags.map((tag) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Text(
-                      tag,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ) ?? TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 12,
-                      ),
-                    ),
-                  );
-                }).toList(),
+                children:
+                    post.hashtags.map((tag) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          tag,
+                          style:
+                              theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w500,
+                              ) ??
+                              TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                        ),
+                      );
+                    }).toList(),
               ),
               const SizedBox(height: 20),
             ],
-            
+
             // Post Info
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: theme.dividerColor.withOpacity(0.2),
-                ),
+                border: Border.all(color: theme.dividerColor.withOpacity(0.2)),
               ),
               child: Row(
                 children: [
@@ -205,17 +215,43 @@ class PostDetailScreen extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     _formatDate(post.timestamp),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    ) ?? TextStyle(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 14,
-                    ),
+                    style:
+                        theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ) ??
+                        TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          fontSize: 14,
+                        ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
+
+            // Visit Profile button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ProfileScreen(userId: post.userId),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.person_outline),
+                label: const Text('Visit Profile'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
           ],
         ),
       ),
