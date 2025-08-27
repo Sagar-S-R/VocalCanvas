@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models/post.dart';
 
@@ -82,6 +86,7 @@ class ExhibitionScreen extends StatelessWidget {
                 // instead which is more efficient for large datasets.
                 final docs = snapshot.data!.docs.toList();
 
+                // Client-side score: likesCount + commentsCount
                 docs.sort((a, b) {
                   final aData = a.data() as Map<String, dynamic>;
                   final bData = b.data() as Map<String, dynamic>;
@@ -99,20 +104,28 @@ class ExhibitionScreen extends StatelessWidget {
                               ? (bData['likes'] as List).length
                               : 0);
 
-                  // Descending order
-                  return bLikesCount.compareTo(aLikesCount);
+                  final aComments =
+                      (aData['commentsCount'] is int)
+                          ? aData['commentsCount'] as int
+                          : 0;
+                  final bComments =
+                      (bData['commentsCount'] is int)
+                          ? bData['commentsCount'] as int
+                          : 0;
+
+                  final aScore = aLikesCount + aComments;
+                  final bScore = bLikesCount + bComments;
+
+                  return bScore.compareTo(aScore);
                 });
 
                 final posts =
                     docs.map((doc) => Post.fromFirestore(doc)).toList();
 
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: posts.length,
-                  itemBuilder: (context, index) {
-                    return _buildPostCard(context, posts[index], index + 1);
-                  },
+                // Swipable rotating wheel carousel
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: _TopPostsWheel(posts: posts),
                 );
               },
             ),
@@ -138,6 +151,7 @@ class ExhibitionScreen extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   Widget _buildPostCard(BuildContext context, Post post, int rank) {
     final theme = Theme.of(context);
     final width = MediaQuery.of(context).size.width;
@@ -560,6 +574,259 @@ class ExhibitionScreen extends StatelessWidget {
   }
 }
 
+class _TopPostsWheel extends StatefulWidget {
+  final List<Post> posts;
+  const _TopPostsWheel({required this.posts});
+
+  @override
+  State<_TopPostsWheel> createState() => _TopPostsWheelState();
+}
+
+class _TopPostsWheelState extends State<_TopPostsWheel> {
+  late final PageController _controller;
+  double _page = 0.0;
+  int _lastHapticPage = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = (widget.posts.isEmpty ? 0 : widget.posts.length * 1000);
+    _controller = PageController(initialPage: initial, viewportFraction: 0.85);
+    _page = initial.toDouble();
+    _controller.addListener(() {
+      setState(() {
+        _page = _controller.page ?? _controller.initialPage.toDouble();
+        // Light haptic on page snap changes (very subtle)
+        final currentInt = _page.round();
+        if (currentInt != _lastHapticPage) {
+          _lastHapticPage = currentInt;
+          HapticFeedback.selectionClick();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final locale = context.locale.languageCode;
+
+    if (widget.posts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return ScrollConfiguration(
+      behavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          ui.PointerDeviceKind.touch,
+          ui.PointerDeviceKind.mouse,
+          ui.PointerDeviceKind.trackpad,
+          ui.PointerDeviceKind.stylus,
+          ui.PointerDeviceKind.invertedStylus,
+        },
+      ),
+      child: PageView.builder(
+        controller: _controller,
+        // Infinite-style loop by omitting itemCount; we still mod the index.
+        itemBuilder: (context, index) {
+          final realIndex = index % widget.posts.length;
+          final post = widget.posts[realIndex];
+
+          final delta = (index - _page);
+          final clamped = delta.clamp(-1.0, 1.0);
+          final rotation = clamped * 0.25; // radians ~14 degrees
+          final scale = 1 - (clamped.abs() * 0.08);
+          final translateY = clamped.abs() * 24.0; // subtle vertical arc
+
+          final title = _localTitle(post, locale);
+          final content = _localContent(post, locale);
+
+          return Transform.translate(
+            offset: Offset(0, translateY),
+            child: Transform.rotate(
+              angle: rotation,
+              child: Transform.scale(
+                scale: scale,
+                child: _WheelPostCard(
+                  post: post,
+                  title: title,
+                  caption: content,
+                  rank: realIndex + 1,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  String _localTitle(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
+      case 'kn':
+        return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
+      default:
+        return post.title_en;
+    }
+  }
+
+  String _localContent(Post post, String locale) {
+    switch (locale) {
+      case 'hi':
+        return post.content_hi.isNotEmpty ? post.content_hi : post.content_en;
+      case 'kn':
+        return post.content_kn.isNotEmpty ? post.content_kn : post.content_en;
+      default:
+        return post.content_en;
+    }
+  }
+}
+
+class _WheelPostCard extends StatelessWidget {
+  final Post post;
+  final String title;
+  final String caption;
+  final int rank;
+  const _WheelPostCard({
+    required this.post,
+    required this.title,
+    required this.caption,
+    required this.rank,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => PostDetailScreen(post: post)),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Image background
+            Positioned.fill(
+              child: post.imageUrl != null && post.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      post.imageUrl!,
+                      fit: BoxFit.cover,
+                    )
+                  : Container(color: theme.colorScheme.surfaceVariant),
+            ),
+
+            // Rank badge top-left
+            Positioned(
+              top: 12,
+              left: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  '#$rank',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+
+            // Gradient overlay bottom
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.65),
+                      Colors.black.withOpacity(0.0),
+                    ],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (caption.isNotEmpty)
+                      Text(
+                        caption,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(Icons.favorite, color: Colors.pinkAccent, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatCountLocal(post.likes.length),
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.chat_bubble_outline, color: Colors.white70, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatCountLocal(post.commentsCount),
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  String _formatCountLocal(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
+}
+
 // Post Detail Screen
 class PostDetailScreen extends StatefulWidget {
   final Post post;
@@ -573,13 +840,34 @@ class PostDetailScreen extends StatefulWidget {
 class _PostDetailScreenState extends State<PostDetailScreen> {
   bool isLiked = false;
   late List<String> currentLikes;
+  late final AudioPlayer _audioPlayer;
+  bool _isPlaying = false;
+  int _commentCount = 0;
 
   @override
   void initState() {
     super.initState();
     currentLikes = List.from(widget.post.likes);
+    _commentCount = widget.post.commentsCount;
+    _audioPlayer = AudioPlayer();
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = state == PlayerState.playing;
+      });
+    });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      isLiked = currentLikes.contains(uid);
+    }
     // TODO: Check if current user has liked this post
     // isLiked = currentLikes.contains(currentUserId);
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   @override
@@ -623,22 +911,25 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         );
                       },
                     ),
-                    // Audio indicator overlay
-                    if (widget.post.audioUrl != null &&
-                        widget.post.audioUrl!.isNotEmpty)
+                    // Audio play/pause overlay
+                    if (widget.post.audioUrl != null && widget.post.audioUrl!.isNotEmpty)
                       Positioned(
                         bottom: 16,
                         right: 16,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Icon(
-                            Icons.play_circle_outline,
-                            color: Colors.white,
-                            size: 24,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(30),
+                          onTap: _togglePlay,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            child: Icon(
+                              _isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline,
+                              color: Colors.white,
+                              size: 24,
+                            ),
                           ),
                         ),
                       ),
@@ -717,13 +1008,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              _formatCount(widget.post.commentsCount),
+                              _formatCount(_commentCount),
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.secondary,
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: _openAddCommentSheet,
+                        icon: const Icon(Icons.add_comment_outlined, size: 18),
+                        label: const Text('Comment'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
                       ),
                       const Spacer(),
@@ -885,35 +1186,127 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  void _toggleLike() {
-    setState(() {
-      if (isLiked) {
-        // TODO: Remove current user ID from likes
-        // currentLikes.remove(currentUserId);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Post unliked! (Feature coming soon)'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } else {
-        // TODO: Add current user ID to likes
-        // currentLikes.add(currentUserId);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Post liked! (Feature coming soon)'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-      isLiked = !isLiked;
-    });
+  void _toggleLike() async {
+    final user = await _ensureUser();
+    if (user == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign-in failed. Please try again.')),
+      );
+      return;
+    }
 
-    // TODO: Update Firestore with new likes array
-    // FirebaseFirestore.instance
-    //     .collection('posts')
-    //     .doc(widget.post.id)
-    //     .update({'likes': currentLikes});
+    final docRef = FirebaseFirestore.instance.collection('posts').doc(widget.post.id);
+    await FirebaseFirestore.instance.runTransaction((txn) async {
+      final snap = await txn.get(docRef);
+      final data = snap.data() as Map<String, dynamic>;
+      final likes = List<String>.from(data['likes'] ?? <String>[]);
+      final liked = likes.contains(user.uid);
+      if (liked) {
+        likes.remove(user.uid);
+        txn.update(docRef, {
+          'likes': likes,
+          'likesCount': (data['likesCount'] is int ? data['likesCount'] as int : likes.length + 1) - 1,
+        });
+      } else {
+        likes.add(user.uid);
+        txn.update(docRef, {
+          'likes': likes,
+          'likesCount': (data['likesCount'] is int ? data['likesCount'] as int : likes.length - 1) + 1,
+        });
+      }
+      if (mounted) {
+        setState(() {
+          currentLikes = likes;
+          isLiked = !liked;
+        });
+      }
+    });
+  }
+
+  Future<User?> _ensureUser() async {
+    var user = FirebaseAuth.instance.currentUser;
+    if (user != null) return user;
+    try {
+      final cred = await FirebaseAuth.instance.signInAnonymously();
+      return cred.user;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _openAddCommentSheet() {
+    final controller = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Add a comment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                minLines: 1,
+                maxLines: 4,
+                decoration: const InputDecoration(
+                  hintText: 'Write something... ',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final text = controller.text.trim();
+                    if (text.isEmpty) return;
+                    final user = await _ensureUser();
+                    if (user == null) return;
+                    final postRef = FirebaseFirestore.instance.collection('posts').doc(widget.post.id);
+                    await postRef.collection('comments').add({
+                      'text': text,
+                      'userId': user.uid,
+                      'timestamp': FieldValue.serverTimestamp(),
+                    });
+                    await postRef.update({'commentsCount': FieldValue.increment(1)});
+                    if (mounted) {
+                      setState(() => _commentCount += 1);
+                      Navigator.of(ctx).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Comment added')));
+                    }
+                  },
+                  icon: const Icon(Icons.send),
+                  label: const Text('Send'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _togglePlay() async {
+    final url = widget.post.audioUrl;
+    if (url == null || url.isEmpty) return;
+    if (_isPlaying) {
+      await _audioPlayer.pause();
+    } else {
+      await _audioPlayer.play(UrlSource(url));
+    }
   }
 
   // Helper methods for localization
