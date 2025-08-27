@@ -18,7 +18,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateMixin {
+class _ProfileScreenState extends State<ProfileScreen>
+    with TickerProviderStateMixin {
   final PostService _postService = PostService();
   final String _userId = FirebaseAuth.instance.currentUser?.uid ?? '';
   UserModel? _user;
@@ -56,12 +57,16 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       if (userDoc.exists) {
         _user = UserModel.fromFirestore(userDoc.data()!, _userId);
       }
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Stop blocking UI after user data arrives
+        });
+      }
       // Subscribe to user's posts stream for live updates
       _postService.getUserPostsStream(_userId).listen((userPosts) {
         if (mounted) {
           setState(() {
             _posts = userPosts;
-            _isLoading = false;
           });
         }
       });
@@ -74,7 +79,6 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +97,12 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                 elevation: 0,
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
-                    padding: const EdgeInsets.only(top: 40, bottom: 24, left: 24, right: 24),
+                    padding: const EdgeInsets.only(
+                      top: 40,
+                      bottom: 24,
+                      left: 24,
+                      right: 24,
+                    ),
                     child: Column(
                       children: [
                         // Centered Profile Picture
@@ -107,60 +116,157 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                           ),
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // Name (multilingual)
                         Text(
-                          _localizedName(_user, context.locale.languageCode) ?? 'Art Lover',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ) ?? const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          _localizedName(_user, context.locale.languageCode) ??
+                              'Art Lover',
+                          style:
+                              theme.textTheme.titleLarge?.copyWith(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ) ??
+                              const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
-                        
+
                         // Bio/Intro paragraph (multilingual)
-                        if (_localizedBio(_user, context.locale.languageCode) != null &&
-                            _localizedBio(_user, context.locale.languageCode)!.isNotEmpty)
+                        if (_localizedBio(_user, context.locale.languageCode) !=
+                                null &&
+                            _localizedBio(
+                              _user,
+                              context.locale.languageCode,
+                            )!.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              _localizedBio(_user, context.locale.languageCode)!,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontSize: 15,
-                                color: theme.colorScheme.onSurface.withOpacity(0.8),
-                              ) ?? TextStyle(
-                                fontSize: 15,
-                                color: theme.colorScheme.onSurface.withOpacity(0.8),
-                              ),
+                              _localizedBio(
+                                _user,
+                                context.locale.languageCode,
+                              )!,
+                              style:
+                                  theme.textTheme.bodyMedium?.copyWith(
+                                    fontSize: 15,
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.8),
+                                  ) ??
+                                  TextStyle(
+                                    fontSize: 15,
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.8),
+                                  ),
                               textAlign: TextAlign.center,
                               maxLines: 3,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        
+
+                        // Contact info: email and phone
+                        if (_user != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (_user!.email.isNotEmpty)
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.email_outlined,
+                                        size: 16,
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.7),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        _user!.email,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme.colorScheme.onSurface
+                                                  .withOpacity(0.8),
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                if (_user!.email.isNotEmpty &&
+                                    (_user!.phone ?? '').isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                    ),
+                                    child: Text(
+                                      '•',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.5),
+                                      ),
+                                    ),
+                                  ),
+                                if ((_user!.phone ?? '').isNotEmpty)
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.phone_outlined,
+                                        size: 16,
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.7),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        _user!.phone!,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme.colorScheme.onSurface
+                                                  .withOpacity(0.8),
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
+                            ),
+                          ),
+
                         // Location (multilingual) if available
-                        if (_localizedLocation(_user, context.locale.languageCode) != null &&
-                            _localizedLocation(_user, context.locale.languageCode)!.isNotEmpty &&
-                            _localizedLocation(_user, context.locale.languageCode)!.toLowerCase() != 'unknown')
+                        if (_localizedLocation(
+                                  _user,
+                                  context.locale.languageCode,
+                                ) !=
+                                null &&
+                            _localizedLocation(
+                              _user,
+                              context.locale.languageCode,
+                            )!.isNotEmpty &&
+                            _localizedLocation(
+                                  _user,
+                                  context.locale.languageCode,
+                                )!.toLowerCase() !=
+                                'unknown')
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              _localizedLocation(_user, context.locale.languageCode)!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 14,
-                                color: theme.colorScheme.onSurface.withOpacity(0.6),
-                              ) ?? TextStyle(
-                                fontSize: 14,
-                                color: theme.colorScheme.onSurface.withOpacity(0.6),
-                              ),
+                              _localizedLocation(
+                                _user,
+                                context.locale.languageCode,
+                              )!,
+                              style:
+                                  theme.textTheme.bodySmall?.copyWith(
+                                    fontSize: 14,
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.6),
+                                  ) ??
+                                  TextStyle(
+                                    fontSize: 14,
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.6),
+                                  ),
                               textAlign: TextAlign.center,
                             ),
                           ),
-                        
+
                         // Audio intro button
                         if (_user?.audioUrl != null)
                           Padding(
@@ -176,13 +282,17 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                                     final base64Str = audioUrl.split(',').last;
                                     try {
                                       final bytes = base64Decode(base64Str);
-                                      await _audioPlayer.play(BytesSource(bytes));
+                                      await _audioPlayer.play(
+                                        BytesSource(bytes),
+                                      );
                                       setState(() => _isPlaying = true);
                                     } catch (e) {
                                       print('Audio playback error: $e');
                                     }
                                   } else {
-                                    await _audioPlayer.play(UrlSource(audioUrl));
+                                    await _audioPlayer.play(
+                                      UrlSource(audioUrl),
+                                    );
                                     setState(() => _isPlaying = true);
                                   }
                                 }
@@ -206,9 +316,9 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                               ),
                             ),
                           ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Posts count
                         Text(
                           '${_posts.length} ${'posts'.tr()}',
@@ -227,20 +337,12 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                     controller: _tabController,
                     indicatorColor: theme.colorScheme.primary,
                     labelColor: theme.colorScheme.primary,
-                    unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.6),
+                    unselectedLabelColor: theme.colorScheme.onSurface
+                        .withOpacity(0.6),
                     tabs: [
+                      Tab(icon: Icon(Icons.grid_on, size: 24), text: 'Posts'),
                       Tab(
-                        icon: Icon(
-                          Icons.grid_on,
-                          size: 24,
-                        ),
-                        text: 'Posts',
-                      ),
-                      Tab(
-                        icon: Icon(
-                          Icons.bookmark_border,
-                          size: 24,
-                        ),
+                        icon: Icon(Icons.bookmark_border, size: 24),
                         text: 'Saved',
                       ),
                     ],
@@ -269,9 +371,13 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
     if (user == null) return null;
     switch (locale) {
       case 'hi':
-        return (user.name_hi != null && user.name_hi!.isNotEmpty) ? user.name_hi : user.name_en;
+        return (user.name_hi != null && user.name_hi!.isNotEmpty)
+            ? user.name_hi
+            : user.name_en;
       case 'kn':
-        return (user.name_kn != null && user.name_kn!.isNotEmpty) ? user.name_kn : user.name_en;
+        return (user.name_kn != null && user.name_kn!.isNotEmpty)
+            ? user.name_kn
+            : user.name_en;
       default:
         return user.name_en;
     }
@@ -303,19 +409,17 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
 
   Widget _buildPostsGrid() {
     final theme = Theme.of(context);
-    
+
     if (_isLoading) {
       return Center(
-        child: CircularProgressIndicator(
-          color: theme.colorScheme.primary,
-        ),
+        child: CircularProgressIndicator(color: theme.colorScheme.primary),
       );
     }
-    
+
     if (_error != null) {
       return Center(child: Text('${'error'.tr()}: $_error'));
     }
-    
+
     if (_posts.isEmpty) {
       return Center(
         child: Padding(
@@ -340,7 +444,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
         ),
       );
     }
-    
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -368,47 +472,50 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                 width: 0.5,
               ),
             ),
-            child: post.imageUrl != null
-                ? Image.network(
-                    post.imageUrl!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: theme.colorScheme.surface,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: theme.colorScheme.primary,
+            child:
+                post.imageUrl != null
+                    ? Image.network(
+                      post.imageUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: theme.colorScheme.surface,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: theme.colorScheme.surface,
-                        child: Center(
-                          child: Icon(
-                            Icons.broken_image_outlined,
-                            color: theme.colorScheme.onSurface.withOpacity(0.3),
-                            size: 32,
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: theme.colorScheme.surface,
+                          child: Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.3,
+                              ),
+                              size: 32,
+                            ),
                           ),
+                        );
+                      },
+                    )
+                    : Container(
+                      color: theme.colorScheme.surface,
+                      child: Center(
+                        child: Icon(
+                          Icons.image_outlined,
+                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          size: 32,
                         ),
-                      );
-                    },
-                  )
-                : Container(
-                    color: theme.colorScheme.surface,
-                    child: Center(
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: theme.colorScheme.onSurface.withOpacity(0.3),
-                        size: 32,
                       ),
                     ),
-                  ),
           ),
         );
       },
@@ -417,7 +524,7 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
 
   Widget _buildSavedPostsGrid() {
     final theme = Theme.of(context);
-    
+
     // For now, show empty state since saved posts functionality isn't implemented yet
     return Center(
       child: Padding(
@@ -465,7 +572,10 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,

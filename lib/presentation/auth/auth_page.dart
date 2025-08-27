@@ -33,6 +33,7 @@ class _AuthPageState extends State<AuthPage>
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   bool _isRegisterMode = false;
   bool _isLoading = false;
@@ -68,13 +69,14 @@ class _AuthPageState extends State<AuthPage>
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
+    _phoneController.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-  final theme = Theme.of(context);
+    final theme = Theme.of(context);
 
     final screenWidth = MediaQuery.of(context).size.width;
     final showTrees = screenWidth >= 700;
@@ -208,19 +210,19 @@ class _AuthPageState extends State<AuthPage>
         },
         itemBuilder:
             (context) => [
-          PopupMenuItem(
-            value: const Locale('en'),
-            child: const Text('English'),
-          ),
-          PopupMenuItem(
-            value: const Locale('hi'),
-            child: const Text('हिंदी'),
-          ),
-          PopupMenuItem(
-            value: const Locale('kn'),
-            child: const Text('ಕನ್ನಡ'),
-          ),
-        ],
+              PopupMenuItem(
+                value: const Locale('en'),
+                child: const Text('English'),
+              ),
+              PopupMenuItem(
+                value: const Locale('hi'),
+                child: const Text('हिंदी'),
+              ),
+              PopupMenuItem(
+                value: const Locale('kn'),
+                child: const Text('ಕನ್ನಡ'),
+              ),
+            ],
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
@@ -242,7 +244,7 @@ class _AuthPageState extends State<AuthPage>
   Widget _buildLogoSection() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Column(
       children: [
         // New VocalCanvas logo
@@ -428,10 +430,17 @@ class _AuthPageState extends State<AuthPage>
               icon: Icons.person_outline_rounded,
             ),
             const SizedBox(height: 16),
+            _buildTextField(
+              controller: _phoneController,
+              label: tr('phone'),
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 16),
           ],
           _buildTextField(
             controller: _emailController,
-            label: tr('email'),
+            label: _isRegisterMode ? tr('email') : tr('email_or_phone'),
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
           ),
@@ -521,20 +530,20 @@ class _AuthPageState extends State<AuthPage>
         child:
             _isLoading
                 ? const SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(
-                    _isRegisterMode ? tr('create_account_button') : tr('sign_in'),
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
                   ),
+                )
+                : Text(
+                  _isRegisterMode ? tr('create_account_button') : tr('sign_in'),
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
       ),
     );
   }
@@ -602,8 +611,39 @@ class _AuthPageState extends State<AuthPage>
     });
 
     try {
+      final identifier = _emailController.text.trim();
+      String emailToUse = identifier;
+      // If identifier is not an email, try treating it as phone: lookup email by phone
+      final isEmail = RegExp(
+        r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+      ).hasMatch(identifier);
+      if (!isEmail) {
+        final query =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .where('phone', isEqualTo: identifier)
+                .limit(1)
+                .get();
+        if (query.docs.isEmpty) {
+          throw FirebaseAuthException(
+            code: 'user-not-found',
+            message: 'User not found',
+          );
+        }
+        final data = query.docs.first.data();
+        final foundEmail = data['email'];
+        if (foundEmail is String && foundEmail.isNotEmpty) {
+          emailToUse = foundEmail;
+        } else {
+          throw FirebaseAuthException(
+            code: 'user-not-found',
+            message: 'User not found',
+          );
+        }
+      }
+
       await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
+        email: emailToUse,
         password: _passwordController.text,
       );
       _navigateToHome();
@@ -620,6 +660,7 @@ class _AuthPageState extends State<AuthPage>
 
   Future<void> _registerWithEmail() async {
     if (_nameController.text.isEmpty ||
+        _phoneController.text.isEmpty ||
         _emailController.text.isEmpty ||
         _passwordController.text.isEmpty ||
         _generatedBio == null ||
@@ -633,7 +674,7 @@ class _AuthPageState extends State<AuthPage>
       _registerStep = 2;
     });
 
-  try {
+    try {
       final UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
             email: _emailController.text.trim(),
@@ -689,6 +730,7 @@ class _AuthPageState extends State<AuthPage>
           if (nameHi != null) 'name_hi': nameHi,
           if (nameKn != null) 'name_kn': nameKn,
           'email': _emailController.text.trim(),
+          'phone': _phoneController.text.trim(),
           'bio_en': bioEn,
           if (bioHi != null) 'bio_hi': bioHi,
           if (bioKn != null) 'bio_kn': bioKn,
@@ -712,7 +754,8 @@ class _AuthPageState extends State<AuthPage>
     }
   }
 
-  String? _nullIfEmpty(String? s) => (s == null || s.trim().isEmpty) ? null : s.trim();
+  String? _nullIfEmpty(String? s) =>
+      (s == null || s.trim().isEmpty) ? null : s.trim();
 
   Future<String?> _translateText(String text, String targetLanguage) async {
     final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
@@ -727,16 +770,17 @@ class _AuthPageState extends State<AuthPage>
       "contents": [
         {
           "parts": [
-            {"text": "Translate the following text to $targetLanguage: $text"}
-          ]
-        }
-      ]
+            {"text": "Translate the following text to $targetLanguage: $text"},
+          ],
+        },
+      ],
     });
     try {
       final response = await http.post(url, headers: headers, body: body);
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-        final translated = decoded['candidates']?[0]?['content']?['parts']?[0]?['text'];
+        final translated =
+            decoded['candidates']?[0]?['content']?['parts']?[0]?['text'];
         if (translated is String) return translated.trim();
       }
       return null;
@@ -755,15 +799,15 @@ class _AuthPageState extends State<AuthPage>
       context: context,
       builder:
           (context) => AlertDialog(
-        title: Text(tr('error_title')),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(tr('ok')),
+            title: Text(tr('error_title')),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(tr('ok')),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 

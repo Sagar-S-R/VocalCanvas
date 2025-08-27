@@ -19,6 +19,8 @@
   "welcome_back": "वापसी पर स्वागत है",
   "full_name": "पूरा नाम",
   "email": "ईमेल",
+  "phone": "फोन",
+  "email_or_phone": "ईमेल या फोन",
   "password": "पासवर्ड",
   "next_record_bio": "अगला: वॉइस बायो रिकॉर्ड करें",
   "create_account_button": "अकाउंट बनाएं",

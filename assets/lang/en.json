@@ -19,6 +19,8 @@
   "welcome_back": "Welcome Back",
   "full_name": "Full Name",
   "email": "Email",
+  "phone": "Phone",
+  "email_or_phone": "Email or Phone",
   "password": "Password",
   "next_record_bio": "Next: Record Voice Bio",
   "create_account_button": "Create Account",

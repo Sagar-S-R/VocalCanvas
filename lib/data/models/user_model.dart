@@ -1,4 +1,3 @@
-
 class UserModel {
   final String id;
   // Multilingual name
@@ -6,6 +5,7 @@ class UserModel {
   final String? name_hi;
   final String? name_kn;
   final String email;
+  final String? phone;
   // Multilingual location
   final String? location_en;
   final String? location_hi;
@@ -23,6 +23,7 @@ class UserModel {
     this.name_hi,
     this.name_kn,
     required this.email,
+    this.phone,
     this.location_en,
     this.location_hi,
     this.location_kn,
@@ -39,6 +40,7 @@ class UserModel {
       name_hi: data['name_hi'],
       name_kn: data['name_kn'],
       email: data['email'] ?? '',
+      phone: data['phone'],
       location_en: data['location_en'] ?? data['location'],
       location_hi: data['location_hi'],
       location_kn: data['location_kn'],
@@ -55,6 +57,7 @@ class UserModel {
       if (name_hi != null) 'name_hi': name_hi,
       if (name_kn != null) 'name_kn': name_kn,
       'email': email,
+      if (phone != null) 'phone': phone,
       if (location_en != null) 'location_en': location_en,
       if (location_hi != null) 'location_hi': location_hi,
       if (location_kn != null) 'location_kn': location_kn,
