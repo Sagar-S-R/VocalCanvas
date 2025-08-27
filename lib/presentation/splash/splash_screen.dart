@@ -78,9 +78,9 @@ class _SplashScreenState extends State<SplashScreen>
 class _LogoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Prefer assets/logo.png if present; otherwise fallback to assets/google_logo.png; else show an Icon
+    // Use logo_dark.png for splash screen
     return Image.asset(
-      'assets/logo.png',
+      'logo_dark.png',
       fit: BoxFit.contain,
       errorBuilder: (context, error, stack) {
         return Image.asset(

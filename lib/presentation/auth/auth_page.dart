@@ -238,37 +238,54 @@ class _AuthPageState extends State<AuthPage>
   }
 
   Widget _buildLogoSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Column(
       children: [
+        // New VocalCanvas logo
         Container(
-          width: 90,
-          height: 90,
+          width: 120,
+          height: 120,
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Theme.of(context).primaryColor.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+                color: theme.primaryColor.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: Icon(
-            Icons.mic_rounded,
-            size: 45,
-            color: Theme.of(context).scaffoldBackgroundColor,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Image.asset(
+              isDark ? 'logo_dark.png' : 'logo_light.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to old design if images not found
+                return Container(
+                  decoration: BoxDecoration(
+                    color: theme.primaryColor,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Icon(
+                    Icons.mic_rounded,
+                    size: 60,
+                    color: theme.scaffoldBackgroundColor,
+                  ),
+                );
+              },
+            ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         Text(
           'VocalCanvas',
           style: GoogleFonts.inter(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color:
-                Theme.of(context).textTheme.titleLarge?.color ??
-                Theme.of(context).colorScheme.onSurface,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -276,11 +293,7 @@ class _AuthPageState extends State<AuthPage>
           tr('tagline'),
           style: GoogleFonts.inter(
             fontSize: 16,
-            color:
-                Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.color?.withOpacity(0.8) ??
-                Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
           ),
         ),
       ],
