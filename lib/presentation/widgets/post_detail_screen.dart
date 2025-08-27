@@ -18,285 +18,206 @@ class PostDetailScreen extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 400,
-            pinned: true,
-            backgroundColor: theme.appBarTheme.backgroundColor,
-            iconTheme: IconThemeData(color: theme.appBarTheme.foregroundColor),
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                children: [
-                  // Background Image
-                  Positioned.fill(
-                    child:
-                        post.imageUrl != null
-                            ? Image.network(post.imageUrl!, fit: BoxFit.cover)
-                            : Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    theme.colorScheme.primary.withOpacity(0.8),
-                                    theme.colorScheme.primary.withOpacity(0.6),
-                                    theme.colorScheme.primary.withOpacity(0.4),
-                                  ],
-                                ),
-                              ),
-                            ),
-                  ),
-                  // Dark overlay
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.6),
-                          ],
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: theme.colorScheme.onSurface,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          'Posts',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+        centerTitle: false,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Post Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: post.imageUrl != null
+                    ? Image.network(
+                        post.imageUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      )
+                    : Container(
+                        color: theme.colorScheme.surface,
+                        child: Center(
+                          child: Icon(
+                            Icons.image_outlined,
+                            size: 64,
+                            color: theme.colorScheme.onSurface.withOpacity(0.3),
+                          ),
                         ),
                       ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Post Title
+            Text(
+              (() {
+                String langCode = Localizations.localeOf(context).languageCode;
+                if (langCode == 'hi') return post.title_hi;
+                if (langCode == 'kn') return post.title_kn;
+                return post.title_en;
+              })(),
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Location
+            if (_getLocationForLanguage(context).isNotEmpty &&
+                _getLocationForLanguage(context) != 'Unknown')
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 16,
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _getLocationForLanguage(context),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
+            // Description
+            Text(
+              'About this artwork',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+              ) ?? TextStyle(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _getFormattedDescription(
+                (() {
+                  String langCode = Localizations.localeOf(context).languageCode;
+                  if (langCode == 'hi') return post.content_hi;
+                  if (langCode == 'kn') return post.content_kn;
+                  return post.content_en;
+                })(),
+              ),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                height: 1.5,
+              ) ?? TextStyle(
+                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                height: 1.5,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Tags
+            if (post.hashtags.isNotEmpty) ...[
+              Text(
+                'Tags',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ) ?? TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: post.hashtags.map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Text(
+                      tag,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ) ?? TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+            ],
+            
+            // Post Info
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: theme.dividerColor.withOpacity(0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.access_time_outlined,
+                    size: 16,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
                   ),
-                  // Content overlay
-                  Positioned(
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_getLocationForLanguage(context).isNotEmpty &&
-                            _getLocationForLanguage(context) != 'Unknown')
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.scaffoldBackgroundColor.withOpacity(
-                                0.08,
-                              ),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: theme.scaffoldBackgroundColor
-                                    .withOpacity(0.12),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              _getLocationForLanguage(context),
-                              style:
-                                  theme.textTheme.bodyMedium?.copyWith(
-                                    color:
-                                        theme.appBarTheme.foregroundColor ??
-                                        theme.colorScheme.onSurface,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ) ??
-                                  const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                            ),
-                          ),
-                        const SizedBox(height: 20),
-                        Text(
-                          (() {
-                            String langCode =
-                                Localizations.localeOf(context).languageCode;
-                            if (langCode == 'hi') return post.title_hi;
-                            if (langCode == 'kn') return post.title_kn;
-                            return post.title_en;
-                          })(),
-                          style:
-                              theme.textTheme.headlineLarge?.copyWith(
-                                color:
-                                    theme.appBarTheme.foregroundColor ??
-                                    theme.colorScheme.onSurface,
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                height: 1.1,
-                              ) ??
-                              const TextStyle(
-                                color: Colors.white,
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                height: 1.1,
-                              ),
-                        ),
-                      ],
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatDate(post.timestamp),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ) ?? TextStyle(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 14,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Container(
-              color: theme.scaffoldBackgroundColor,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-
-                    // Full Description
-                    Text(
-                      'About this artwork',
-                      style: TextStyle(
-                        color:
-                            theme.textTheme.titleLarge?.color ??
-                            theme.appBarTheme.foregroundColor ??
-                            Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _getFormattedDescription(
-                        (() {
-                          String langCode =
-                              Localizations.localeOf(context).languageCode;
-                          if (langCode == 'hi') return post.content_hi;
-                          if (langCode == 'kn') return post.content_kn;
-                          return post.content_en;
-                        })(),
-                      ),
-                      style: TextStyle(
-                        color:
-                            theme.textTheme.bodyLarge?.color?.withOpacity(
-                              0.9,
-                            ) ??
-                            Colors.white70,
-                        fontSize: 16,
-                        height: 1.5,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      textAlign: TextAlign.justify,
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Hashtags
-                    if (post.hashtags.isNotEmpty) ...[
-                      Text(
-                        'Tags',
-                        style: TextStyle(
-                          color:
-                              theme.textTheme.titleMedium?.color ??
-                              theme.appBarTheme.foregroundColor ??
-                              Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 8,
-                        children:
-                            post.hashtags.map((tag) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  tag,
-                                  style: TextStyle(
-                                    color:
-                                        theme.appBarTheme.foregroundColor ??
-                                        Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                      ),
-                    ],
-
-                    const SizedBox(height: 30),
-
-                    // Post info
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.1),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.access_time,
-                                color: Colors.white70,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _formatDate(post.timestamp),
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_getLocationForLanguage(context).isNotEmpty &&
-                              _getLocationForLanguage(context) !=
-                                  'Unknown') ...[
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  color: Colors.white70,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _getLocationForLanguage(context),
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 50),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }

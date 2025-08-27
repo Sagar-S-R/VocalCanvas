@@ -14,6 +14,7 @@ import '../exhibition/exhibition_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../data/models/post.dart';
 import '../profile/profile_screen.dart'; // Import ProfileScreen
+import '../widgets/bottom_navigation_bar.dart';
 
 // -----------------------------------------------------------------
 // 1. HOME SCREEN - INSTAGRAM-STYLE FEED
@@ -412,98 +413,185 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
     const SettingsScreen(),
   ];
 
+  String _getPageTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'home'.tr();
+      case 1:
+        return 'explore'.tr();
+      case 2:
+        return 'search'.tr();
+      case 3:
+        return 'exhibition'.tr();
+      case 4:
+        return 'profile'.tr();
+      case 5:
+        return 'settings'.tr();
+      default:
+        return 'VocalCanvas';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final double width = MediaQuery.of(context).size.width;
-    final bool isSmall = width < 700;
+    final bool isSmall = width < 800; // Increased breakpoint for better mobile experience
+    
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
-        children: <Widget>[
-          // Main content area
-          Padding(
-            padding: EdgeInsets.only(left: isSmall ? 16 : 72),
-            child: Stack(
-              children: [
-                Center(child: _widgetOptions.elementAt(_selectedIndex)),
-                Positioned(
-                  bottom: 40,
-                  right: 40,
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreateScreen(),
-                        ),
-                      );
-                    },
-                    backgroundColor: theme.colorScheme.primary,
-                    // Using theme color for FAB icon
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    elevation: 8.0,
-                    tooltip: 'create_post'.tr(),
-                    child: const Icon(Icons.add, size: 36),
+        children: [
+          Column(
+            children: [
+              // Top App Bar with heading and profile
+              Container(
+                height: 80,
+                padding: EdgeInsets.only(
+                  left: isSmall ? 16 : 88,
+                  right: 16,
+                  top: 16,
+                  bottom: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.scaffoldBackgroundColor,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: theme.dividerColor.withOpacity(0.1),
+                      width: 1,
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          // Small-screen menu launcher
-          if (isSmall && !_isRailExtended)
-            Positioned(
-              top: 16,
-              left: 16,
-              child: MouseRegion(
-                onEnter: (_) => setState(() => _isRailExtended = true),
-                child: GestureDetector(
-                  onTap: () => setState(() => _isRailExtended = true),
-                  child: Container(
-                    height: 56,
-                    width: 56,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.shadowColor.withOpacity(0.25),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _getPageTitle(_selectedIndex),
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Search button
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 2),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _selectedIndex == 2 
+                                  ? theme.colorScheme.primary.withOpacity(0.1)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Icon(
+                              Icons.search,
+                              color: _selectedIndex == 2 
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Profile button
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIndex = 4),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: _selectedIndex == 4 
+                                  ? theme.colorScheme.primary.withOpacity(0.1)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: theme.colorScheme.primary,
+                                  child: Icon(
+                                    Icons.person,
+                                    size: 18,
+                                    color: theme.colorScheme.onPrimary,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'profile'.tr(),
+                                  style: TextStyle(
+                                    color: _selectedIndex == 4 
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: Center(
-                      // Using theme color for menu icon
-                      child: Icon(
-                        Icons.menu,
-                        color: theme.colorScheme.onPrimary,
+                  ],
+                ),
+              ),
+              // Main content
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(left: isSmall ? 0 : 72),
+                  child: Stack(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: _widgetOptions.elementAt(_selectedIndex),
                       ),
-                    ),
+                      if (!isSmall)
+                        Positioned(
+                          bottom: 40,
+                          right: 40,
+                          child: FloatingActionButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const CreateScreen(),
+                                ),
+                              );
+                            },
+                            backgroundColor: theme.colorScheme.primary,
+                            child: Icon(
+                              Icons.add,
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-            ),
+            ],
+          ),
 
-          // Blurred overlay when sidebar is extended
-          if (_isRailExtended)
-            Padding(
-              padding: EdgeInsets.only(left: isSmall ? 0 : 72.0),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _isRailExtended = false;
-                  });
-                },
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                  child: Container(color: Colors.black.withOpacity(0.2)),
-                ),
+          // Blurred overlay when sidebar is extended on mobile
+          if (isSmall && _isRailExtended)
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isRailExtended = false;
+                });
+              },
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                child: Container(color: Colors.black.withOpacity(0.2)),
               ),
             ),
 
-          // Sidebar
+          // Desktop Sidebar
           if (!isSmall)
             MouseRegion(
               onEnter: (_) => setState(() => _isRailExtended = true),
@@ -513,9 +601,10 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                 expandedWidth: 250,
                 collapsedWidth: 72,
               ),
-            )
-          else if (_isRailExtended)
-            // On small screens, only render the full sidebar when expanded
+            ),
+
+          // Mobile sidebar (only when extended)
+          if (isSmall && _isRailExtended)
             MouseRegion(
               onExit: (_) => setState(() => _isRailExtended = false),
               child: _buildSidebarContainer(
@@ -524,9 +613,19 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                 collapsedWidth: 0,
               ),
             ),
-          // REMOVED redundant code block here
         ],
       ),
+      
+      // Bottom Navigation Bar for Mobile
+      bottomNavigationBar: isSmall ? CustomBottomNavigationBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        onMoreTapped: () => setState(() => _isRailExtended = true),
+      ) : null,
     );
   }
 
@@ -679,4 +778,5 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
       ),
     );
   }
+
 }

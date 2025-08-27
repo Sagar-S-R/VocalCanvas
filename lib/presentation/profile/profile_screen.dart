@@ -66,31 +66,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  String _getTitleForLanguage(Post post, BuildContext context) {
-    String langCode = Localizations.localeOf(context).languageCode;
-    if (langCode == 'hi') {
-      return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
-    }
-    if (langCode == 'kn') {
-      return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
-    }
-    return post.title_en;
-  }
-
-  String _getCaptionForLanguage(Post post, BuildContext context) {
-    String langCode = Localizations.localeOf(context).languageCode;
-    if (langCode == 'hi') {
-      return (post.caption_hi?.isNotEmpty == true)
-          ? post.caption_hi!
-          : (post.caption_en ?? '');
-    }
-    if (langCode == 'kn') {
-      return (post.caption_kn?.isNotEmpty == true)
-          ? post.caption_kn!
-          : (post.caption_en ?? '');
-    }
-    return post.caption_en ?? '';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,134 +75,139 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Profile header
+            // Instagram-style Profile header
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-              child: Row(
+              padding: const EdgeInsets.only(top: 40, bottom: 24, left: 24, right: 24),
+              child: Column(
                 children: [
+                  // Centered Profile Picture
                   CircleAvatar(
-                    radius: 40,
+                    radius: 50,
                     backgroundColor: theme.colorScheme.primary,
                     child: Icon(
                       Icons.person,
-                      size: 40,
+                      size: 50,
                       color: theme.colorScheme.onPrimary,
                     ),
                   ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _user?.name ?? 'Art Lover',
-                          style:
-                              theme.textTheme.titleLarge?.copyWith(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ) ??
-                              const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
+                  const SizedBox(height: 16),
+                  
+                  // Name
+                  Text(
+                    _user?.name ?? 'Art Lover',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ) ?? const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Bio/Intro paragraph
+                  if (_user?.bio != null && _user!.bio!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        _user!.bio!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontSize: 15,
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        ) ?? TextStyle(
+                          fontSize: 15,
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
                         ),
-                        const SizedBox(height: 8),
-                        if (_user?.email != null)
-                          Text(
-                            '${'email'.tr()}: ${_user!.email}',
-                            style: (theme.textTheme.bodyMedium ??
-                                    const TextStyle())
-                                .copyWith(
-                                  fontSize: 16,
-                                  color: (theme.textTheme.bodyMedium?.color ??
-                                          theme.colorScheme.onSurface)
-                                      .withOpacity(0.95),
-                                ),
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  
+                  // Location (if available)
+                  if (_user?.location != null &&
+                      _user!.location!.isNotEmpty &&
+                      _user!.location!.toLowerCase() != 'unknown')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        _user!.location!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ) ?? TextStyle(
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  
+                  // Audio intro button
+                  if (_user?.audioUrl != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          if (_isPlaying) {
+                            await _audioPlayer.pause();
+                            setState(() => _isPlaying = false);
+                          } else {
+                            final audioUrl = _user!.audioUrl!;
+                            if (audioUrl.startsWith('data:audio')) {
+                              final base64Str = audioUrl.split(',').last;
+                              try {
+                                final bytes = base64Decode(base64Str);
+                                await _audioPlayer.play(BytesSource(bytes));
+                                setState(() => _isPlaying = true);
+                              } catch (e) {
+                                print('Audio playback error: $e');
+                              }
+                            } else {
+                              await _audioPlayer.play(UrlSource(audioUrl));
+                              setState(() => _isPlaying = true);
+                            }
+                          }
+                        },
+                        icon: Icon(
+                          _isPlaying ? Icons.pause : Icons.play_arrow,
+                          size: 18,
+                        ),
+                        label: Text(
+                          _isPlaying ? 'pause'.tr() : 'listen_intro'.tr(),
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                        if (_user?.bio != null && _user!.bio!.isNotEmpty)
-                          Text(
-                            '${'bio'.tr()}: ${_user!.bio}',
-                            style: (theme.textTheme.bodyMedium ??
-                                    const TextStyle())
-                                .copyWith(
-                                  fontSize: 16,
-                                  color: (theme.textTheme.bodyMedium?.color ??
-                                          theme.colorScheme.onSurface)
-                                      .withOpacity(0.95),
-                                ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        if (_user?.location != null &&
-                            _user!.location!.isNotEmpty &&
-                            _user!.location!.toLowerCase() != 'unknown')
-                          Text(
-                            '${'location'.tr()}: ${_user!.location}',
-                            style:
-                                theme.textTheme.bodyMedium?.copyWith(
-                                  fontSize: 16,
-                                  color: (theme.textTheme.bodyMedium?.color ??
-                                          theme.colorScheme.onSurface)
-                                      .withOpacity(0.85),
-                                ) ??
-                                const TextStyle(fontSize: 16),
-                          ),
-                        if (_user?.audioUrl != null)
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  _isPlaying ? Icons.pause : Icons.volume_up,
-                                  color:
-                                      theme.iconTheme.color ??
-                                      theme.colorScheme.onSurface,
-                                ),
-                                onPressed: () async {
-                                  if (_isPlaying) {
-                                    await _audioPlayer.pause();
-                                    setState(() => _isPlaying = false);
-                                  } else {
-                                    final audioUrl = _user!.audioUrl!;
-                                    if (audioUrl.startsWith('data:audio')) {
-                                      // Extract base64 and play
-                                      final base64Str =
-                                          audioUrl.split(',').last;
-                                      try {
-                                        final bytes = base64Decode(base64Str);
-                                        await _audioPlayer.play(
-                                          BytesSource(bytes),
-                                        );
-                                        setState(() => _isPlaying = true);
-                                      } catch (e) {
-                                        print('Audio playback error: $e');
-                                      }
-                                    } else {
-                                      await _audioPlayer.play(
-                                        UrlSource(audioUrl),
-                                      );
-                                      setState(() => _isPlaying = true);
-                                    }
-                                  }
-                                },
-                              ),
-                              Text(
-                                'listen_intro'.tr(),
-                                style:
-                                    theme.textTheme.bodyMedium?.copyWith(
-                                      color:
-                                          (theme.textTheme.bodyMedium?.color ??
-                                              theme.colorScheme.onSurface),
-                                    ) ??
-                                    TextStyle(
-                                      color: theme.colorScheme.onSurface
-                                          .withOpacity(0.7),
-                                    ),
-                              ),
-                            ],
-                          ),
-                      ],
+                        ),
+                      ),
+                    ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Posts count
+                  Text(
+                    '${_posts.length} ${'posts'.tr()}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
+            ),
+            
+            // Divider
+            Divider(
+              height: 1,
+              thickness: 0.5,
+              color: theme.dividerColor.withOpacity(0.3),
             ),
             // Posts grid
             Expanded(
@@ -241,101 +221,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       : _error != null
                       ? Center(child: Text('${'error'.tr()}: $_error'))
                       : _posts.isEmpty
-                      ? Center(child: Text('no_posts_yet'.tr()))
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.photo_library_outlined,
+                                  size: 64,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.3),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'no_posts_yet'.tr(),
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
                       : GridView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.all(16),
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 0.8,
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 2,
+                              mainAxisSpacing: 2,
+                              childAspectRatio: 1.0,
                             ),
                         itemCount: _posts.length,
                         itemBuilder: (context, index) {
                           final post = _posts[index];
-                          return Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 4,
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) =>
-                                            PostDetailScreen(post: post),
-                                  ),
-                                );
-                              },
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(16),
-                                      ),
-                                      child:
-                                          post.imageUrl != null
-                                              ? Image.network(
-                                                post.imageUrl!,
-                                                fit: BoxFit.cover,
-                                                width: double.infinity,
-                                              )
-                                              : Container(
-                                                color: theme.dividerColor,
-                                                child: Center(
-                                                  child: Icon(
-                                                    Icons.image,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                              ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Text(
-                                      _getTitleForLanguage(post, context),
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                            color: theme.colorScheme.onSurface,
-                                          ) ??
-                                          const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12.0,
-                                    ),
-                                    child: Text(
-                                      _getCaptionForLanguage(post, context),
-                                      style:
-                                          theme.textTheme.bodyMedium?.copyWith(
-                                            color: theme.colorScheme.onSurface
-                                                .withOpacity(0.85),
-                                            fontSize: 14,
-                                          ) ??
-                                          const TextStyle(fontSize: 14),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                ],
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => PostDetailScreen(post: post),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface,
+                                border: Border.all(
+                                  color: theme.dividerColor.withOpacity(0.1),
+                                  width: 0.5,
+                                ),
                               ),
+                              child: post.imageUrl != null
+                                  ? Image.network(
+                                      post.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Container(
+                                          color: theme.colorScheme.surface,
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: theme.colorScheme.surface,
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.broken_image_outlined,
+                                              color: theme.colorScheme.onSurface.withOpacity(0.3),
+                                              size: 32,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : Container(
+                                      color: theme.colorScheme.surface,
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.image_outlined,
+                                          color: theme.colorScheme.onSurface.withOpacity(0.3),
+                                          size: 32,
+                                        ),
+                                      ),
+                                    ),
                             ),
                           );
                         },
