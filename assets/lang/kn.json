@@ -59,13 +59,19 @@
   "browse_by_category": "ವರ್ಗಗಳಿಂದ ಬ್ರೌಸ್ ಮಾಡಿ"
   ,
   "exhibition_title": "ಸಂಡೇ ಪ್ರದರ್ಶನ",
-  "exhibition_subtitle": "ವಾರದ ಅತ್ಯಂತ ಪ್ರೇರಣಾದಾಯಕ ಸೃಜನಶೀಲರನ್ನು ಆಚರಿಸಲಾಗುತ್ತಿದೆ.",
   "weekly_leaderboard": "ಸಾಪ್ತಾಹಿಕ ಲೀಡರ್ಬೋರ್ಡ್",
   "badge_trending_creator": "ಟ್ರೆಂಡಿಂಗ್ ಕ್ರಿಯೇಟರ್",
   "badge_storyteller": "ಕಥೆಗಾರ",
   "badge_community_choice": "ಗಣಬೆನು ಆಯ್ಕೆ",
   "bio": "ಬಯೋ",
-  "listen_intro": "ಪರಿಚಯವನ್ನು ಕೇಳಿ",
+  "listen_intro": "ಪರಿಚಯ ಕೇಳಿ",
   "error": "ದೋಷ",
-  "no_posts_yet": "ಇನ್ನೂ ಯಾವುದೇ ಪೋಸ್ಟ್ ಇಲ್ಲ."
+  "no_posts_yet": "ಇನ್ನೂ ಯಾವುದೇ ಪೋಸ್ಟ್‌ಗಳಿಲ್ಲ。",
+  "create": "ರಚಿಸಿ",
+  "more": "ಹೆಚ್ಚು",
+  "search_posts": "ಪೋಸ್ಟ್‌ಗಳನ್ನು ಹುಡುಕಿ...",
+  "search_results": "ಹುಡುಕಾಟ ಫಲಿತಾಂಶಗಳು",
+  "no_results_found": "ಯಾವುದೇ ಫಲಿತಾಂಶಗಳು ಸಿಗಲಿಲ್ಲ",
+  "recent_posts": "ಇತ್ತೀಚಿನ ಪೋಸ್ಟ್‌ಗಳು",
+  "posts": "ಪೋಸ್ಟ್‌ಗಳು"
 }

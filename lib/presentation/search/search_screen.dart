@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models/post.dart';
+import '../../core/services/post_service.dart';
+import '../home/home_screen.dart';
+import '../widgets/post_grid_card.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -11,11 +13,13 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
+  final PostService _postService = PostService();
   final TextEditingController _searchController = TextEditingController();
   List<Post> _searchResults = [];
   List<Post> _allPosts = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool _hasSearched = false;
+  String? _error;
 
   @override
   void initState() {
@@ -30,30 +34,30 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _loadAllPosts() async {
+    try {
+      final posts = await _postService.getAllPosts();
+      if (mounted) {
+        setState(() {
+          _allPosts = posts;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refreshPosts() async {
     setState(() {
       _isLoading = true;
+      _error = null;
     });
-
-    try {
-      final QuerySnapshot snapshot =
-          await FirebaseFirestore.instance
-              .collection('posts')
-              .orderBy('timestamp', descending: true)
-              .get();
-
-      final List<Post> posts =
-          snapshot.docs.map((doc) => Post.fromFirestore(doc)).toList();
-
-      setState(() {
-        _allPosts = posts;
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error loading posts: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    await _loadAllPosts();
   }
 
   void _searchPosts(String query) {
@@ -132,321 +136,153 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-  String _getCurrentTitle(Post post) {
-    final locale = context.locale.languageCode;
-    switch (locale) {
-      case 'hi':
-        return post.title_hi.isNotEmpty ? post.title_hi : post.title_en;
-      case 'kn':
-        return post.title_kn.isNotEmpty ? post.title_kn : post.title_en;
-      default:
-        return post.title_en;
-    }
-  }
 
-  String _getCurrentContent(Post post) {
-    final locale = context.locale.languageCode;
-    switch (locale) {
-      case 'hi':
-        return post.content_hi.isNotEmpty ? post.content_hi : post.content_en;
-      case 'kn':
-        return post.content_kn.isNotEmpty ? post.content_kn : post.content_en;
-      default:
-        return post.content_en;
-    }
-  }
-
-  String? _getCurrentLocation(Post post) {
-    final locale = context.locale.languageCode;
-    switch (locale) {
-      case 'hi':
-        return post.location_hi?.isNotEmpty == true
-            ? post.location_hi
-            : post.location_en;
-      case 'kn':
-        return post.location_kn?.isNotEmpty == true
-            ? post.location_kn
-            : post.location_en;
-      default:
-        return post.location_en;
-    }
+  void _openPostDetail(Post post) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        pageBuilder:
+            (BuildContext context, _, __) => PostDetailOverlay(post: post),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final postsToShow = _hasSearched ? _searchResults : _allPosts;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Search bar
-            TextField(
-              controller: _searchController,
-              onChanged: _searchPosts,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontSize: 18,
-                color: theme.colorScheme.onSurface,
-              ),
-              decoration: InputDecoration(
-                hintText: 'search_posts'.tr(),
-                hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
-                suffixIcon:
-                    _searchController.text.isNotEmpty
-                        ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _searchPosts('');
-                          },
-                        )
-                        : null,
-                filled: true,
-                fillColor: theme.cardColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 16.0,
-                  horizontal: 20.0,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Loading indicator
-            if (_isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            // Search results
-            else if (_hasSearched) ...[
-              Text(
-                'search_results'.tr() + ' (${_searchResults.length})',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (_searchResults.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 64,
-                          color: theme.colorScheme.onSurface.withOpacity(0.4),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'no_results_found'.tr(),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _searchResults.length,
-                  itemBuilder: (context, index) {
-                    return _buildPostCard(_searchResults[index]);
-                  },
-                ),
-            ]
-            // Recent posts when no search
-            else ...[
-              Text(
-                'recent_posts'.tr(),
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              if (_allPosts.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Text('No posts available'),
-                  ),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _allPosts.length > 10 ? 10 : _allPosts.length,
-                  itemBuilder: (context, index) {
-                    return _buildPostCard(_allPosts[index]);
-                  },
-                ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPostCard(Post post) {
-    final theme = Theme.of(context);
-    final currentTitle = _getCurrentTitle(post);
-    final currentContent = _getCurrentContent(post);
-    final currentLocation = _getCurrentLocation(post);
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Post header with title and timestamp
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Column(
+        children: [
+          // Header with search bar
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+            child: Column(
               children: [
-                Expanded(
-                  child: Text(
-                    currentTitle,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                // Search bar
+                TextField(
+                  controller: _searchController,
+                  onChanged: _searchPosts,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontSize: 18,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'search_posts'.tr(),
+                    hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                    prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              _searchPosts('');
+                            },
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.refresh),
+                            onPressed: _refreshPosts,
+                          ),
+                    filled: true,
+                    fillColor: theme.cardColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 16.0,
+                      horizontal: 20.0,
                     ),
                   ),
                 ),
-                Text(
-                  DateFormat.yMMMd().format(post.timestamp),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Location if available
-            if (currentLocation != null && currentLocation.isNotEmpty) ...[
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    currentLocation,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.primary,
-                    ),
+                if (_hasSearched) ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Text(
+                        'search_results'.tr() + ' (${_searchResults.length})',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-            ],
-
-            // Post content
-            Text(
-              currentContent,
-              style: theme.textTheme.bodyMedium,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 12),
-
-            // Image if available
-            if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  post.imageUrl!,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 200,
-                      color: theme.colorScheme.surface,
-                      child: const Center(child: Icon(Icons.broken_image)),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Hashtags
-            if (post.hashtags.isNotEmpty) ...[
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 4.0,
-                children:
-                    post.hashtags.map((hashtag) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '#$hashtag',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Post stats
-            Row(
-              children: [
-                Icon(Icons.favorite, size: 16, color: Colors.red),
-                const SizedBox(width: 4),
-                Text('${post.likes.length}', style: theme.textTheme.bodySmall),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.comment,
-                  size: 16,
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                const SizedBox(width: 4),
-                Text('${post.commentsCount}', style: theme.textTheme.bodySmall),
-                const Spacer(),
-                if (post.audioUrl != null && post.audioUrl!.isNotEmpty)
-                  Icon(
-                    Icons.audiotrack,
-                    size: 16,
-                    color: theme.colorScheme.primary,
-                  ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          // Content
+          Expanded(
+            child: _isLoading
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
+                    ),
+                  )
+                : _error != null
+                    ? Center(child: Text('Error: $_error'))
+                    : postsToShow.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  _hasSearched ? Icons.search_off : Icons.post_add,
+                                  size: 64,
+                                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  _hasSearched ? 'no_results_found'.tr() : 'no_posts_yet'.tr(),
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              // Responsive columns: min 2, max 5
+                              int columns = (constraints.maxWidth ~/ 220).clamp(2, 5);
+                              double spacing = 12;
+                              return RefreshIndicator(
+                                onRefresh: _refreshPosts,
+                                child: GridView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 8,
+                                  ),
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: columns,
+                                    crossAxisSpacing: spacing,
+                                    mainAxisSpacing: spacing,
+                                    childAspectRatio: 1,
+                                  ),
+                                  itemCount: postsToShow.length,
+                                  itemBuilder: (context, index) {
+                                    final post = postsToShow[index];
+                                    return PostGridCard(
+                                      post: post,
+                                      onTap: () => _openPostDetail(post),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+          ),
+        ],
       ),
     );
   }
+
 }

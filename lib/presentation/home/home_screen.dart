@@ -7,7 +7,6 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/services/post_service.dart';
 
-import '../explore/explore_screen.dart';
 import '../search/search_screen.dart';
 import '../create/create_screen.dart';
 import '../exhibition/exhibition_screen.dart';
@@ -109,7 +108,7 @@ class HomeFeedScreen extends StatelessWidget {
 
                         final posts = snapshot.data!;
                         return ListView.builder(
-                          padding: const EdgeInsets.symmetric(vertical: 40.0),
+                          padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 16.0),
                           itemCount: posts.length,
                           itemBuilder: (context, index) {
                             final post = posts[index];
@@ -208,6 +207,21 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
     return widget.post.location_en ?? '';
   }
 
+  String _getContentForLanguage(BuildContext context) {
+    String langCode = Localizations.localeOf(context).languageCode;
+    if (langCode == 'hi') {
+      return widget.post.content_hi.isNotEmpty
+          ? widget.post.content_hi
+          : widget.post.content_en;
+    }
+    if (langCode == 'kn') {
+      return widget.post.content_kn.isNotEmpty
+          ? widget.post.content_kn
+          : widget.post.content_en;
+    }
+    return widget.post.content_en;
+  }
+
   Future<void> _toggleLike() async {
     if (_currentUserId == null) return;
     await _postService.toggleLike(widget.post.id, _currentUserId!);
@@ -265,121 +279,207 @@ class _PostDetailOverlayState extends State<PostDetailOverlay> {
                   color: theme.cardColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Row(
-                  children: [
-                    // Image
-                    if (widget.post.imageUrl != null)
-                      Expanded(
-                        flex: 2,
-                        child: ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            bottomLeft: Radius.circular(20),
-                          ),
-                          child: Image.network(
-                            widget.post.imageUrl!,
-                            fit: BoxFit.cover,
-                            height: double.infinity,
-                            errorBuilder:
-                                (context, error, stackTrace) => const Center(
-                                  child: Icon(
-                                    Icons.image_not_supported,
-                                    size: 50,
-                                  ),
-                                ),
-                          ),
-                        ),
-                      ),
-                    // Details
-                    Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _getTitleForLanguage(context),
-                              style:
-                                  theme.textTheme.titleLarge?.copyWith(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ) ??
-                                  const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            if (_getLocationForLanguage(context).isNotEmpty)
-                              Text(
-                                _getLocationForLanguage(context),
-                                // Using theme color for better consistency
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.textTheme.bodyMedium?.color
-                                      ?.withOpacity(0.7),
-                                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isSmall = constraints.maxWidth < 800;
+                    
+                    if (isSmall) {
+                      // Mobile layout: Column with image on top, details below
+                      return Column(
+                        children: [
+                          // Image
+                          if (widget.post.imageUrl != null)
+                            ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
                               ),
-                            const SizedBox(height: 8),
-                            const Divider(),
-                            const SizedBox(height: 8),
+                              child: Image.network(
+                                widget.post.imageUrl!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 300,
+                                errorBuilder:
+                                    (context, error, stackTrace) => Container(
+                                      height: 300,
+                                      color: theme.colorScheme.surface,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                          size: 50,
+                                        ),
+                                      ),
+                                    ),
+                              ),
+                            ),
+                          // Details
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _getTitleForLanguage(context),
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ) ?? const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  if (_getLocationForLanguage(context).isNotEmpty)
+                                    Text(
+                                      _getLocationForLanguage(context),
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                  const SizedBox(height: 16),
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      child: Text(
+                                        _getContentForLanguage(context),
+                                        style: theme.textTheme.bodyLarge,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.favorite,
+                                          color: widget.post.likes.contains(_currentUserId)
+                                              ? Colors.red
+                                              : theme.iconTheme.color,
+                                        ),
+                                        onPressed: _toggleLike,
+                                      ),
+                                      Text('${widget.post.likes.length}'),
+                                      const SizedBox(width: 16),
+                                      IconButton(
+                                        icon: const Icon(Icons.comment),
+                                        onPressed: () => _showComments(context),
+                                      ),
+                                      Text('${widget.post.commentsCount}'),
+                                      const Spacer(),
+                                      if (widget.post.audioUrl != null)
+                                        IconButton(
+                                          icon: Icon(
+                                            _isPlaying ? Icons.pause : Icons.play_arrow,
+                                          ),
+                                          onPressed: _playAudio,
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    } else {
+                      // Desktop layout: Row with image on left, details on right
+                      return Row(
+                        children: [
+                          // Image
+                          if (widget.post.imageUrl != null)
                             Expanded(
-                              child: SingleChildScrollView(
-                                child: Text(
-                                  (() {
-                                    String langCode =
-                                        Localizations.localeOf(
-                                          context,
-                                        ).languageCode;
-                                    if (langCode == 'hi') {
-                                      return widget.post.content_hi;
-                                    }
-                                    if (langCode == 'kn') {
-                                      return widget.post.content_kn;
-                                    }
-                                    return widget.post.content_en;
-                                  })(),
-                                  style:
-                                      theme.textTheme.bodyLarge?.copyWith(
-                                        fontSize: 16,
-                                        height: 1.5,
-                                      ) ??
-                                      const TextStyle(
-                                        fontSize: 16,
-                                        height: 1.5,
+                              flex: 2,
+                              child: ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  bottomLeft: Radius.circular(20),
+                                ),
+                                child: Image.network(
+                                  widget.post.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  height: double.infinity,
+                                  errorBuilder:
+                                      (context, error, stackTrace) => const Center(
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                          size: 50,
+                                        ),
                                       ),
                                 ),
                               ),
                             ),
-                            const Divider(),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.favorite),
-                                  onPressed: _toggleLike,
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.comment_outlined),
-                                  onPressed: () => _showComments(context),
-                                ),
-                                if (widget.post.audioUrl != null)
-                                  IconButton(
-                                    icon: Icon(
-                                      _isPlaying
-                                          ? Icons.pause
-                                          : Icons.volume_up_outlined,
+                          // Details
+                          Expanded(
+                            flex: 1,
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _getTitleForLanguage(context),
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ) ?? const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    onPressed: _playAudio,
                                   ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  if (_getLocationForLanguage(context).isNotEmpty)
+                                    Text(
+                                      _getLocationForLanguage(context),
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                  const SizedBox(height: 16),
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      child: Text(
+                                        _getContentForLanguage(context),
+                                        style: theme.textTheme.bodyLarge,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.favorite,
+                                          color: widget.post.likes.contains(_currentUserId)
+                                              ? Colors.red
+                                              : theme.iconTheme.color,
+                                        ),
+                                        onPressed: _toggleLike,
+                                      ),
+                                      Text('${widget.post.likes.length}'),
+                                      const SizedBox(width: 16),
+                                      IconButton(
+                                        icon: const Icon(Icons.comment),
+                                        onPressed: () => _showComments(context),
+                                      ),
+                                      Text('${widget.post.commentsCount}'),
+                                      const Spacer(),
+                                      if (widget.post.audioUrl != null)
+                                        IconButton(
+                                          icon: Icon(
+                                            _isPlaying ? Icons.pause : Icons.play_arrow,
+                                          ),
+                                          onPressed: _playAudio,
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                          ),
+                        ],
+                      );
+                    }
+                  },
                 ),
               ),
             ),
@@ -406,31 +506,12 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
 
   static final List<Widget> _widgetOptions = <Widget>[
     HomeFeedScreen(),
-    const ExploreScreen(),
     const SearchScreen(),
     const ExhibitionScreen(),
     const ProfileScreen(),
     const SettingsScreen(),
   ];
 
-  String _getPageTitle(int index) {
-    switch (index) {
-      case 0:
-        return 'home'.tr();
-      case 1:
-        return 'explore'.tr();
-      case 2:
-        return 'search'.tr();
-      case 3:
-        return 'exhibition'.tr();
-      case 4:
-        return 'profile'.tr();
-      case 5:
-        return 'settings'.tr();
-      default:
-        return 'VocalCanvas';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -444,101 +525,6 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
         children: [
           Column(
             children: [
-              // Top App Bar with heading and profile
-              Container(
-                height: 80,
-                padding: EdgeInsets.only(
-                  left: isSmall ? 16 : 88,
-                  right: 16,
-                  top: 16,
-                  bottom: 16,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.scaffoldBackgroundColor,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: theme.dividerColor.withOpacity(0.1),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _getPageTitle(_selectedIndex),
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Search button
-                        GestureDetector(
-                          onTap: () => setState(() => _selectedIndex = 2),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: _selectedIndex == 2 
-                                  ? theme.colorScheme.primary.withOpacity(0.1)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Icon(
-                              Icons.search,
-                              color: _selectedIndex == 2 
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface,
-                              size: 24,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Profile button
-                        GestureDetector(
-                          onTap: () => setState(() => _selectedIndex = 4),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: _selectedIndex == 4 
-                                  ? theme.colorScheme.primary.withOpacity(0.1)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: theme.colorScheme.primary,
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 18,
-                                    color: theme.colorScheme.onPrimary,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'profile'.tr(),
-                                  style: TextStyle(
-                                    color: _selectedIndex == 4 
-                                        ? theme.colorScheme.primary
-                                        : theme.colorScheme.onSurface,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
               // Main content
               Expanded(
                 child: Padding(
@@ -567,6 +553,60 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
                             child: Icon(
                               Icons.add,
                               color: theme.colorScheme.onPrimary,
+                            ),
+                          ),
+                        ),
+                      // Profile floating button for mobile
+                      if (isSmall)
+                        Positioned(
+                          top: 40,
+                          right: 16,
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedIndex = 3),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _selectedIndex == 3 
+                                    ? theme.colorScheme.primary.withOpacity(0.9)
+                                    : theme.colorScheme.surface.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: theme.shadowColor.withOpacity(0.2),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 14,
+                                    backgroundColor: _selectedIndex == 3 
+                                        ? theme.colorScheme.onPrimary
+                                        : theme.colorScheme.primary,
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 16,
+                                      color: _selectedIndex == 3 
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'profile'.tr(),
+                                    style: TextStyle(
+                                      color: _selectedIndex == 3 
+                                          ? theme.colorScheme.onPrimary
+                                          : theme.colorScheme.onSurface,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -660,29 +700,24 @@ class _VocalCanvasHomePageState extends State<VocalCanvasHomePage> {
               children: [
                 _buildNavItem(icon: Icons.home, label: 'home'.tr(), index: 0),
                 _buildNavItem(
-                  icon: Icons.explore,
-                  label: 'explore'.tr(),
-                  index: 1,
-                ),
-                _buildNavItem(
                   icon: Icons.search,
                   label: 'search'.tr(),
-                  index: 2,
+                  index: 1,
                 ),
                 _buildNavItem(
                   icon: Icons.museum,
                   label: 'exhibition'.tr(),
-                  index: 3,
+                  index: 2,
                 ),
                 _buildNavItem(
                   icon: Icons.person,
                   label: 'profile'.tr(),
-                  index: 4,
+                  index: 3,
                 ),
                 _buildNavItem(
                   icon: Icons.settings,
                   label: 'settings'.tr(),
-                  index: 5,
+                  index: 4,
                 ),
               ],
             ),

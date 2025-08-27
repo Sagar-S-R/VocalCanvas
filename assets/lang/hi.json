@@ -65,7 +65,14 @@
   "badge_storyteller": "कहानीकार",
   "badge_community_choice": "कम्युनिटी चॉइस",
   "bio": "बायो",
-  "listen_intro": "इंट्रो सुनें",
+  "listen_intro": "परिचय सुनें",
   "error": "त्रुटि",
-  "no_posts_yet": "अभी कोई पोस्ट नहीं।"
+  "no_posts_yet": "अभी तक कोई पोस्ट नहीं।",
+  "create": "बनाएं",
+  "more": "और",
+  "search_posts": "पोस्ट खोजें...",
+  "search_results": "खोज परिणाम",
+  "no_results_found": "कोई परिणाम नहीं मिला",
+  "recent_posts": "हाल की पोस्ट",
+  "posts": "पोस्ट"
 }

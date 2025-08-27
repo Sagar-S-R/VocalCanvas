@@ -31,72 +31,82 @@ class CustomBottomNavigationBar extends StatelessWidget {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildBottomNavItem(
-            icon: Icons.home,
-            label: 'home'.tr(),
-            index: 0,
-            theme: theme,
+          Flexible(
+            child: _buildBottomNavItem(
+              icon: Icons.home,
+              label: 'home'.tr(),
+              index: 0,
+              theme: theme,
+            ),
           ),
-          _buildBottomNavItem(
-            icon: Icons.explore,
-            label: 'explore'.tr(),
-            index: 1,
-            theme: theme,
+          Flexible(
+            child: _buildBottomNavItem(
+              icon: Icons.search,
+              label: 'search'.tr(),
+              index: 1,
+              theme: theme,
+            ),
           ),
           // Create button
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreateScreen(),
+          Flexible(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CreateScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        color: theme.colorScheme.onPrimary,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'create'.tr(),
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      Icons.add,
-                      color: theme.colorScheme.onPrimary,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'create'.tr(),
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
               ),
             ),
           ),
-          _buildBottomNavItem(
-            icon: Icons.museum,
-            label: 'exhibition'.tr(),
-            index: 3,
-            theme: theme,
+          Flexible(
+            child: _buildBottomNavItem(
+              icon: Icons.museum,
+              label: 'exhibition'.tr(),
+              index: 2,
+              theme: theme,
+            ),
           ),
-          _buildBottomNavItem(
-            icon: Icons.settings,
-            label: 'settings'.tr(),
-            index: 5,
-            theme: theme,
+          Flexible(
+            child: _buildBottomNavItem(
+              icon: Icons.settings,
+              label: 'settings'.tr(),
+              index: 4,
+              theme: theme,
+            ),
           ),
         ],
       ),
@@ -114,7 +124,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
     return GestureDetector(
       onTap: () => onItemTapped(index),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -123,18 +133,20 @@ class CustomBottomNavigationBar extends StatelessWidget {
               color: isSelected 
                 ? theme.colorScheme.primary 
                 : theme.colorScheme.onSurface.withOpacity(0.7),
-              size: 24,
+              size: 20,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
                 color: isSelected 
                   ? theme.colorScheme.primary 
                   : theme.colorScheme.onSurface.withOpacity(0.7),
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

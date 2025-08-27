@@ -17,18 +17,45 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDark;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text("settings".tr()),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(24.0),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Column(
         children: [
+          // Header similar to explore page
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+            child: Row(
+              children: [
+                Text(
+                  'settings'.tr(),
+                  style: theme.textTheme.headlineLarge?.copyWith(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Serif',
+                  ) ?? const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Serif',
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.info_outline,
+                    color: theme.iconTheme.color ?? theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              children: [
           // Language Section
           Text(
             "language".tr(),
@@ -124,6 +151,9 @@ class SettingsScreen extends StatelessWidget {
               title: const Text('About VocalCanvas'),
               subtitle: const Text('Version 1.0.0'),
               onTap: () {},
+            ),
+          ),
+              ],
             ),
           ),
         ],

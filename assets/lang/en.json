@@ -67,5 +67,12 @@
   "bio": "Bio",
   "listen_intro": "Listen to intro",
   "error": "Error",
-  "no_posts_yet": "No posts yet."
+  "no_posts_yet": "No posts yet.",
+  "create": "Create",
+  "more": "More",
+  "search_posts": "Search posts...",
+  "search_results": "Search Results",
+  "no_results_found": "No results found",
+  "recent_posts": "Recent Posts",
+  "posts": "Posts"
 }
