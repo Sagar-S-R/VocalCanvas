@@ -108,9 +108,9 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         ),
                         const SizedBox(height: 16),
                         
-                        // Name
+                        // Name (multilingual)
                         Text(
-                          _user?.name ?? 'Art Lover',
+                          _localizedName(_user, context.locale.languageCode) ?? 'Art Lover',
                           style: theme.textTheme.titleLarge?.copyWith(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -122,12 +122,13 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                         ),
                         const SizedBox(height: 8),
                         
-                        // Bio/Intro paragraph
-                        if (_user?.bio != null && _user!.bio!.isNotEmpty)
+                        // Bio/Intro paragraph (multilingual)
+                        if (_localizedBio(_user, context.locale.languageCode) != null &&
+                            _localizedBio(_user, context.locale.languageCode)!.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              _user!.bio!,
+                              _localizedBio(_user, context.locale.languageCode)!,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontSize: 15,
                                 color: theme.colorScheme.onSurface.withOpacity(0.8),
@@ -141,14 +142,14 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                             ),
                           ),
                         
-                        // Location (if available)
-                        if (_user?.location != null &&
-                            _user!.location!.isNotEmpty &&
-                            _user!.location!.toLowerCase() != 'unknown')
+                        // Location (multilingual) if available
+                        if (_localizedLocation(_user, context.locale.languageCode) != null &&
+                            _localizedLocation(_user, context.locale.languageCode)!.isNotEmpty &&
+                            _localizedLocation(_user, context.locale.languageCode)!.toLowerCase() != 'unknown')
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              _user!.location!,
+                              _localizedLocation(_user, context.locale.languageCode)!,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontSize: 14,
                                 color: theme.colorScheme.onSurface.withOpacity(0.6),
@@ -262,6 +263,42 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
         ),
       ),
     );
+  }
+
+  String? _localizedName(UserModel? user, String locale) {
+    if (user == null) return null;
+    switch (locale) {
+      case 'hi':
+        return (user.name_hi != null && user.name_hi!.isNotEmpty) ? user.name_hi : user.name_en;
+      case 'kn':
+        return (user.name_kn != null && user.name_kn!.isNotEmpty) ? user.name_kn : user.name_en;
+      default:
+        return user.name_en;
+    }
+  }
+
+  String? _localizedBio(UserModel? user, String locale) {
+    if (user == null) return null;
+    switch (locale) {
+      case 'hi':
+        return user.bio_hi ?? user.bio_en;
+      case 'kn':
+        return user.bio_kn ?? user.bio_en;
+      default:
+        return user.bio_en;
+    }
+  }
+
+  String? _localizedLocation(UserModel? user, String locale) {
+    if (user == null) return null;
+    switch (locale) {
+      case 'hi':
+        return user.location_hi ?? user.location_en;
+      case 'kn':
+        return user.location_kn ?? user.location_en;
+      default:
+        return user.location_en;
+    }
   }
 
   Widget _buildPostsGrid() {

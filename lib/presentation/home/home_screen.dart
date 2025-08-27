@@ -42,7 +42,7 @@ class HomeFeedScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final showTrees = screenWidth >= 700;
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255,234, 227, 220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           if (showTrees) ...[

@@ -9,6 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 // ...existing code...
 
 class AuthPage extends StatefulWidget {
@@ -72,12 +74,12 @@ class _AuthPageState extends State<AuthPage>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  final theme = Theme.of(context);
 
     final screenWidth = MediaQuery.of(context).size.width;
     final showTrees = screenWidth >= 700;
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255,234, 227, 220),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Stack(
           children: [
@@ -631,7 +633,7 @@ class _AuthPageState extends State<AuthPage>
       _registerStep = 2;
     });
 
-    try {
+  try {
       final UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
             email: _emailController.text.trim(),
@@ -646,11 +648,53 @@ class _AuthPageState extends State<AuthPage>
       if (userId != null) {
         final audioBase64 = base64Encode(_profileAudioBytes!);
         final audioUrl = 'data:audio/m4a;base64,$audioBase64';
+
+        // Prepare multilingual fields
+        final nameEn = _nameController.text.trim();
+        final bioEn = _generatedBio ?? '';
+        final locEn = _generatedLocation ?? '';
+
+        String? nameHi;
+        String? nameKn;
+        String? bioHi;
+        String? bioKn;
+        String? locHi;
+        String? locKn;
+
+        // Translate using Gemini if API key is available
+        final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+        if (apiKey.isNotEmpty) {
+          try {
+            final results = await Future.wait<String?>([
+              _translateText(nameEn, 'Hindi'),
+              _translateText(nameEn, 'Kannada'),
+              _translateText(bioEn, 'Hindi'),
+              _translateText(bioEn, 'Kannada'),
+              _translateText(locEn, 'Hindi'),
+              _translateText(locEn, 'Kannada'),
+            ]);
+            nameHi = _nullIfEmpty(results[0]);
+            nameKn = _nullIfEmpty(results[1]);
+            bioHi = _nullIfEmpty(results[2]);
+            bioKn = _nullIfEmpty(results[3]);
+            locHi = _nullIfEmpty(results[4]);
+            locKn = _nullIfEmpty(results[5]);
+          } catch (_) {
+            // Fallback: keep only English if translation fails
+          }
+        }
+
         await FirebaseFirestore.instance.collection('users').doc(userId).set({
-          'name': _nameController.text.trim(),
+          'name_en': nameEn,
+          if (nameHi != null) 'name_hi': nameHi,
+          if (nameKn != null) 'name_kn': nameKn,
           'email': _emailController.text.trim(),
-          'bio': _generatedBio,
-          'location': _generatedLocation,
+          'bio_en': bioEn,
+          if (bioHi != null) 'bio_hi': bioHi,
+          if (bioKn != null) 'bio_kn': bioKn,
+          'location_en': locEn,
+          if (locHi != null) 'location_hi': locHi,
+          if (locKn != null) 'location_kn': locKn,
           'audioUrl': audioUrl,
         });
       }
@@ -665,6 +709,39 @@ class _AuthPageState extends State<AuthPage>
           _registerStep = 0;
         });
       }
+    }
+  }
+
+  String? _nullIfEmpty(String? s) => (s == null || s.trim().isEmpty) ? null : s.trim();
+
+  Future<String?> _translateText(String text, String targetLanguage) async {
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    if (apiKey.isEmpty) return null;
+    if (text.trim().isEmpty) return '';
+
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey',
+    );
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode({
+      "contents": [
+        {
+          "parts": [
+            {"text": "Translate the following text to $targetLanguage: $text"}
+          ]
+        }
+      ]
+    });
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final translated = decoded['candidates']?[0]?['content']?['parts']?[0]?['text'];
+        if (translated is String) return translated.trim();
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 
