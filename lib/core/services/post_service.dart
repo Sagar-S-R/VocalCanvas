@@ -49,6 +49,7 @@ class PostService {
 
     final newPost = Post(
       id: '',
+  // Ensure author is always set from current user
       title_en: title_en,
       title_hi: title_hi,
       title_kn: title_kn,
@@ -70,7 +71,8 @@ class PostService {
       commentsCount: 0,
     );
 
-    await postsRef.add(newPost.toFirestore());
+  // Writes both userId and authorId via Post.toFirestore()
+  await postsRef.add(newPost.toFirestore());
   }
 
   Stream<List<Post>> getPostsStream() {

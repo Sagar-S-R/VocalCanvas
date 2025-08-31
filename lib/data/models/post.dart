@@ -66,7 +66,8 @@ class Post {
 
     return Post(
       id: doc.id,
-      userId: data['userId'] ?? '',
+  // Backward/forward compatibility: prefer userId, fallback to authorId
+  userId: data['userId'] ?? data['authorId'] ?? '',
       title_en: data['title_en'] ?? data['title'] ?? '',
       title_hi: data['title_hi'] ?? data['title'] ?? '',
       title_kn: data['title_kn'] ?? data['title'] ?? '',
@@ -91,6 +92,8 @@ class Post {
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
+  // Also store authorId to satisfy code paths expecting this name
+  'authorId': userId,
       'title_en': title_en,
       'title_hi': title_hi,
       'title_kn': title_kn,
