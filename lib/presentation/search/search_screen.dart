@@ -136,7 +136,6 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
-
   void _openPostDetail(Post post) {
     Navigator.of(context).push(
       PageRouteBuilder(
@@ -157,7 +156,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-  body: Column(
+      body: Column(
         children: [
           // Header with search bar
           Container(
@@ -177,19 +176,23 @@ class _SearchScreenState extends State<SearchScreen> {
                     hintStyle: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
-                    prefixIcon: Icon(Icons.search, color: theme.iconTheme.color),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              _searchPosts('');
-                            },
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.refresh),
-                            onPressed: _refreshPosts,
-                          ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: theme.iconTheme.color,
+                    ),
+                    suffixIcon:
+                        _searchController.text.isNotEmpty
+                            ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                _searchPosts('');
+                              },
+                            )
+                            : IconButton(
+                              icon: const Icon(Icons.refresh),
+                              onPressed: _refreshPosts,
+                            ),
                     filled: true,
                     fillColor: theme.cardColor,
                     border: OutlineInputBorder(
@@ -202,95 +205,127 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   ),
                 ),
-        // Keep the area clean per requirement: just photos grid below
+                // Keep the area clean per requirement: just photos grid below
               ],
             ),
           ),
 
           // Content
           Expanded(
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
-                    ),
-                  )
-                : _error != null
+            child:
+                _isLoading
+                    ? Center(
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
+                    )
+                    : _error != null
                     ? Center(child: Text('Error: $_error'))
                     : postsToShow.isEmpty
-                        ? Center(child: Text(_hasSearched ? 'no_results_found'.tr() : 'no_posts_yet'.tr()))
-                        : LayoutBuilder(
-                            builder: (context, constraints) {
-                              // Responsive columns: min 2, max 5
-                              int columns = (constraints.maxWidth ~/ 220).clamp(2, 5);
-                              double spacing = 12;
-                              return RefreshIndicator(
-                                onRefresh: _refreshPosts,
-                                child: GridView.builder(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 8,
-                                  ),
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: columns,
-                                    crossAxisSpacing: spacing,
-                                    mainAxisSpacing: spacing,
-                                    childAspectRatio: 0.82,
-                                  ),
-                                  itemCount: postsToShow.length,
-                                  itemBuilder: (context, index) {
-                                    final post = postsToShow[index];
-                                    final image = post.imageUrl;
-                                    final locale = context.locale.languageCode;
-                                    final title = locale == 'hi'
-                                        ? post.title_hi
-                                        : locale == 'kn'
-                                            ? post.title_kn
-                                            : post.title_en;
-                                    return InkWell(
-                                      onTap: () => _openPostDetail(post),
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          AspectRatio(
-                                            aspectRatio: 1,
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(12),
-                                              child: image != null && image.isNotEmpty
-                                                  ? Image.network(
-                                                      image,
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (c, e, s) => Container(
-                                                        color: theme.colorScheme.surfaceVariant,
-                                                        child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                    ? Center(
+                      child: Text(
+                        _hasSearched
+                            ? 'no_results_found'.tr()
+                            : 'no_posts_yet'.tr(),
+                      ),
+                    )
+                    : LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Responsive columns: min 2, max 5
+                        int columns = (constraints.maxWidth ~/ 220).clamp(2, 5);
+                        double spacing = 12;
+                        return RefreshIndicator(
+                          onRefresh: _refreshPosts,
+                          child: GridView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  crossAxisSpacing: spacing,
+                                  mainAxisSpacing: spacing,
+                                  childAspectRatio: 0.82,
+                                ),
+                            itemCount: postsToShow.length,
+                            itemBuilder: (context, index) {
+                              final post = postsToShow[index];
+                              final image = post.imageUrl;
+                              final locale = context.locale.languageCode;
+                              final title =
+                                  locale == 'hi'
+                                      ? post.title_hi
+                                      : locale == 'kn'
+                                      ? post.title_kn
+                                      : post.title_en;
+                              return InkWell(
+                                onTap: () => _openPostDetail(post),
+                                borderRadius: BorderRadius.circular(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    AspectRatio(
+                                      aspectRatio: 1,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child:
+                                            image != null && image.isNotEmpty
+                                                ? Image.network(
+                                                  image,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder:
+                                                      (c, e, s) => Container(
+                                                        color:
+                                                            theme
+                                                                .colorScheme
+                                                                .surfaceVariant,
+                                                        child: Icon(
+                                                          Icons
+                                                              .image_not_supported,
+                                                          color: theme
+                                                              .colorScheme
+                                                              .onSurface
+                                                              .withOpacity(0.4),
+                                                        ),
                                                       ),
-                                                    )
-                                                  : Container(
-                                                      color: theme.colorScheme.surfaceVariant,
-                                                      child: Icon(Icons.photo, color: theme.colorScheme.onSurface.withOpacity(0.4)),
-                                                    ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            title,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                                          ),
-                                        ],
+                                                )
+                                                : Container(
+                                                  color:
+                                                      theme
+                                                          .colorScheme
+                                                          .surfaceVariant,
+                                                  child: Icon(
+                                                    Icons.photo,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withOpacity(0.4),
+                                                  ),
+                                                ),
                                       ),
-                                    );
-                                  },
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ],
                                 ),
                               );
                             },
                           ),
+                        );
+                      },
+                    ),
           ),
         ],
       ),
     );
   }
-
 }
