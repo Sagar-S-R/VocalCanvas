@@ -3,7 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../data/models/post.dart';
 import '../../core/services/post_service.dart';
 import '../home/home_screen.dart';
-import '../widgets/post_grid_card.dart';
+// Removed complex card; we'll render a simple photo tile with title
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -157,7 +157,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Column(
+  body: Column(
         children: [
           // Header with search bar
           Container(
@@ -202,19 +202,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   ),
                 ),
-                if (_hasSearched) ...[
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Text(
-                        'search_results'.tr() + ' (${_searchResults.length})',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+        // Keep the area clean per requirement: just photos grid below
               ],
             ),
           ),
@@ -230,25 +218,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 : _error != null
                     ? Center(child: Text('Error: $_error'))
                     : postsToShow.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  _hasSearched ? Icons.search_off : Icons.post_add,
-                                  size: 64,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.4),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _hasSearched ? 'no_results_found'.tr() : 'no_posts_yet'.tr(),
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
+                        ? Center(child: Text(_hasSearched ? 'no_results_found'.tr() : 'no_posts_yet'.tr()))
                         : LayoutBuilder(
                             builder: (context, constraints) {
                               // Responsive columns: min 2, max 5
@@ -265,14 +235,52 @@ class _SearchScreenState extends State<SearchScreen> {
                                     crossAxisCount: columns,
                                     crossAxisSpacing: spacing,
                                     mainAxisSpacing: spacing,
-                                    childAspectRatio: 1,
+                                    childAspectRatio: 0.82,
                                   ),
                                   itemCount: postsToShow.length,
                                   itemBuilder: (context, index) {
                                     final post = postsToShow[index];
-                                    return PostGridCard(
-                                      post: post,
+                                    final image = post.imageUrl;
+                                    final locale = context.locale.languageCode;
+                                    final title = locale == 'hi'
+                                        ? post.title_hi
+                                        : locale == 'kn'
+                                            ? post.title_kn
+                                            : post.title_en;
+                                    return InkWell(
                                       onTap: () => _openPostDetail(post),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          AspectRatio(
+                                            aspectRatio: 1,
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(12),
+                                              child: image != null && image.isNotEmpty
+                                                  ? Image.network(
+                                                      image,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (c, e, s) => Container(
+                                                        color: theme.colorScheme.surfaceVariant,
+                                                        child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                                                      ),
+                                                    )
+                                                  : Container(
+                                                      color: theme.colorScheme.surfaceVariant,
+                                                      child: Icon(Icons.photo, color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                                                    ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            title,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                                          ),
+                                        ],
+                                      ),
                                     );
                                   },
                                 ),
