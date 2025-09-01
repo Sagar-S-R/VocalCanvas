@@ -1,133 +1,388 @@
-VocalCanvas is a Flutter voice-first application that helps artists turn spoken descriptions of their work into short social posts (Instagram-ready) using speech transcription + a large language model (LLM) generation step.
+# 🎨 VocalCanvas
 
-This README explains how to set up the project locally (Windows PowerShell), which environment variables are required, how to run the app, and where known issues live.
+[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
+[![Gemini AI](https://img.shields.io/badge/Gemini%20AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev)
 
-## What this project does
+**VocalCanvas** is a voice-first Flutter application that **empowers local artisans** by transforming their spoken descriptions into engaging, social-ready posts. Voice is part of cultural identity, so we use it as the foundation for creative expression.
 
-- Desktop-friendly UI with a collapsible left sidebar and screens: Home, Explore, Search, Exhibition, Create.
-- Core flow (Create): record voice → real-time transcription → send transcription to an LLM endpoint (Groq) → receive generated social copy + hashtags → display result for user to copy/use.
-- Uses these Flutter packages: `flutter_dotenv`, `record`, `speech_to_text`, `http`, `google_fonts`, `flutter_staggered_grid_view`.
+Artisans record their thoughts, and **Flutter's Speech-to-Text (STT)** transcribes them in real-time. Then **Google Gemini AI** generates:
+✅ SEO-friendly captions  
+✅ Relevant hashtags  
+✅ Location tags  
+✅ Multilingual content support
 
-## Repo layout (important files)
-
-- `lib/main.dart` — app entry; loads `.env` and shows `VocalCanvasHomePage`.
-- `lib/presentation/create/widgets/voice_recorder_widget.dart` — recorder + transcription + network call to Groq API.
-- `lib/presentation/create/create_screen.dart` — Create screen & generated post UI.
-- `lib/core/services/ai_service.dart` — currently a stub (recommended: move network logic here).
-- `pubspec.yaml` — dependencies and assets list.
-- `.gitignore` — already ignores `.env` (keep your API keys private).
-
-## Prerequisites
-
-1. Flutter SDK (stable channel). Follow: https://docs.flutter.dev/get-started/install/windows
-2. For Windows desktop builds: Visual Studio with "Desktop development with C++" workload.
-3. If targeting Android/iOS: Android Studio / Xcode respectively and the platform-specific setup.
-4. (Optional) Python + pip — only needed if you plan to run `lib/speech_to_text.py` standalone.
-
-## Required environment variables
-
-Create a file named `.env` in the project root (this file is ignored by git). Minimal required keys:
-
-```
-GROQ_API_KEY=sk_your_groq_key_here
-```
-
-- `GROQ_API_KEY` — used by `voice_recorder_widget.dart` to authorize calls to the Groq API endpoint.
-
-I recommend creating `.env.example` with the same key but placeholder value so collaborators know what to add.
-
-## Quick setup (Windows PowerShell)
-
-1. Open PowerShell in the project root (where `pubspec.yaml` is).
-2. Install dependencies and analyze code:
-
-```powershell
-flutter pub get
-flutter analyze
-```
-
-3. Create a `.env` file in the project root with your `GROQ_API_KEY` (example above).
-
-4. Run the app (desktop):
-
-```powershell
-flutter run -d windows
-```
-
-Or run in Chrome/web if you prefer:
-
-```powershell
-flutter run -d chrome
-```
-
-To run on Android (emulator or device):
-
-```powershell
-flutter devices # check devices
-flutter run -d <device-id>
-```
-
-## How to test the Create flow
-
-1. Open the app and click Create (plus icon in the sidebar).
-2. Tap the circular microphone button to start recording (it will transcribe live).
-3. Tap again to stop. The app sends the transcription to the configured GROQ API and shows the generated post.
-
-If nothing appears, check the console for logs — the app prints API/network errors to the debug console.
-
-## Known issues & recommended fixes
-
-1. Recorder API mismatch
-	- `voice_recorder_widget.dart` currently creates `AudioRecorder _audioRecorder = AudioRecorder();` but the `record` package exposes a `Record` class with `Record().start()` / `Record().stop()` API. This will raise runtime errors. Recommended fix: replace with the `Record` usage per package docs.
-
-2. Network call & parsing
-	- The code posts JSON to `https://api.groq.com/openai/v1/chat/completions` and attempts to parse `responseBody['choices'][0]['message']['content']`. Verify Groq's API schema and handle non-200 responses and unexpected JSON shapes robustly.
-
-3. Missing services
-	- `lib/core/services/ai_service.dart` and `marketplace_api.dart` are stubs. Move network logic into `AIService` for testability and to centralize retries/error handling.
-
-4. Tests & CI
-	- There are no unit/widget tests for the Create flow. Add a widget test that mocks the network call and verifies UI state transitions.
-
-5. Mobile permissions
-	- If you run on Android/iOS, add proper microphone permission messages in `AndroidManifest.xml` / `Info.plist`.
-
-## Troubleshooting tips
-
-- Microphone permissions (Windows): enable microphone access in Windows Settings → Privacy → Microphone.
-- If `flutter run` fails because desktop support isn't enabled: enable desktop on your Flutter installation: `flutter config --enable-windows-desktop` and ensure Visual Studio is installed.
-- If transcription isn't working, ensure `speech_to_text` initializes successfully — check debug console for initialization errors.
-
-## Security & secrets
-
-- `.env` is intentionally listed in `.gitignore`. Never commit your API keys. Use environment-specific secrets management for production.
-
-## Suggested next actions (I can implement)
-
-1. Fix the recorder usage in `voice_recorder_widget.dart` to use the `record` package correctly and guard permission checks.
-2. Implement `AIService` in `lib/core/services/ai_service.dart` and move the Groq call there with robust parsing and retries.
-3. Add `.env.example` and update this README with a short `CONTRIBUTING.md` snippet.
-4. Add widget tests for the Create flow that mock HTTP responses.
-
-If you want, I can implement items (1) and (2) now and run `flutter analyze` to verify — tell me which to start with.
+This enables artisans to reach a **wider audience** and grow their visibility effortlessly across digital platforms.
 
 ---
 
-Credits: scaffolded from a Flutter project; images and assets are declared in `pubspec.yaml` under `flutter.assets`.
+## 🌟 Key Features
 
-License: none declared.
+### 🎤 **Voice-First Content Creation**
+- **Record → Transcribe → Generate → Post** workflow
+- Real-time speech-to-text transcription
+- Support for English and Hindi voice input
+- High-quality audio recording with web and mobile support
 
-Enjoy working on VocalCanvas — tell me which fix you'd like me to make next and I will apply it.
+### 🤖 **AI-Powered Content Generation**
+- **Google Gemini AI** integration for intelligent content creation
+- Automatic caption generation tailored for artisans
+- Smart hashtag suggestions based on artwork descriptions
+- Location inference from voice descriptions
 
-## Getting Started
+### 🌐 **Multilingual Support**
+- **Three language interface**: English, Hindi, Kannada
+- Automatic content translation using Gemini AI
+- Culturally appropriate content generation for different languages
+- Multilingual user profiles and post content
 
-This project is a starting point for a Flutter application.
+### 🖼 **Social-Like Experience**
+- Like, comment, and share posts
+- Listen to **original audio recordings** from artists
+- User profiles with voice-recorded bios
+- Follow artists and admire their work
 
-A few resources to get you started if this is your first Flutter project:
+### 🎨 **Beautiful, Responsive UI**
+- **Dark mode** support with elegant theming
+- **Responsive design** - works seamlessly on mobile, tablet, and web
+- **Staggered grid layouts** for artistic content display
+- **Firebase Authentication** with Google Sign-In
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 📱 **Complete App Ecosystem**
+- **Home** - Personalized feed of artisan posts
+- **Explore** - Discover artworks by category and location
+- **Exhibition** - Gallery-style showcase of top-rated posts
+- **Create** - Voice-powered content creation studio
+- **Profile & Settings** - Customizable user experience
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 📱 App Flow
+
+1. **Authentication** 
+   - Sign up as an Artist or Art Admirer
+   - Record voice bio during registration
+   - Multilingual profile setup
+
+2. **Home Feed**
+   - Personalized content based on preferences
+   - Like, comment, and share functionality
+   - Audio playback of original recordings
+
+3. **Explore & Discovery**
+   - Grid view of artworks with images and descriptions
+   - Filter by location, category, or artist
+   - Search functionality across posts and users
+
+4. **Exhibition Gallery**
+   - Curated showcase of top-liked posts
+   - Elegant, museum-like presentation
+   - Rank-based display with visual indicators
+
+5. **Content Creation**
+   - Voice recording with real-time transcription
+   - AI-powered content enhancement via Gemini
+   - Image upload and post customization
+   - Multi-platform sharing capabilities
+
+6. **Profile Management**
+   - Multilingual bio and location settings
+   - Audio introduction recording
+   - Dark mode and language preferences
+
+---
+
+## 🛠️ Tech Stack
+
+### **Frontend**
+- **Flutter 3.7.2+** - Cross-platform UI framework
+- **Dart** - Programming language
+- **Provider** - State management
+- **Google Fonts** - Typography
+- **Easy Localization** - Internationalization
+
+### **Backend & Services**
+- **Firebase Auth** - User authentication & Google Sign-In
+- **Cloud Firestore** - NoSQL database for posts and users
+- **Firebase Storage** - Image and audio file storage
+- **Google Gemini AI** - Content generation and translation
+
+### **Voice & Audio**
+- **Speech-to-Text** - Real-time voice transcription
+- **Record** - High-quality audio recording
+- **AudioPlayers** - Audio playback functionality
+
+### **UI/UX Libraries**
+- **Flutter Staggered Grid View** - Artistic layout components
+- **Image Picker** - Photo selection and camera integration
+- **Flutter DotEnv** - Environment variable management
+
+---
+
+## 📂 Project Structure
+
+```
+lib/
+├── main.dart                          # App entry point & Firebase initialization
+├── core/
+│   ├── services/
+│   │   ├── ai_service.dart           # Gemini AI integration (expandable)
+│   │   ├── post_service.dart         # Post CRUD operations
+│   │   └── marketplace_api.dart      # Future marketplace features
+│   └── theme/                        # App theming and styles
+├── data/
+│   └── models/
+│       ├── post.dart                 # Post data model with multilingual support
+│       └── user_model.dart           # User profile model
+├── presentation/
+│   ├── auth/
+│   │   └── auth_page.dart           # Login/signup with voice bio recording
+│   ├── home/                        # Home feed and navigation
+│   ├── explore/                     # Content discovery and search
+│   ├── exhibition/                  # Gallery-style post showcase
+│   ├── create/
+│   │   ├── create_screen.dart       # Post creation UI
+│   │   └── widgets/
+│   │       └── voice_recorder_widget.dart  # Core voice recording component
+│   ├── profile/                     # User profiles and settings
+│   ├── settings/                    # App preferences and configuration
+│   └── widgets/                     # Reusable UI components
+├── utils/
+│   ├── constants.dart               # App constants and configuration
+│   ├── locale_provider.dart         # Language state management
+│   └── theme_provider.dart          # Dark mode state management
+└── l10n/                           # Generated localization files
+
+assets/
+├── lang/                           # Translation files (en, hi, kn)
+├── images/                         # Art samples and UI assets
+└── .env                           # Environment variables (git-ignored)
+```
+
+---
+
+## ✅ Prerequisites
+
+### **Development Environment**
+- **Flutter SDK 3.7.2+** → [Install Guide](https://docs.flutter.dev/get-started/install)
+- **Android Studio** or **VS Code** with Flutter extensions
+- **Git** for version control
+
+### **Platform-Specific Requirements**
+- **Windows**: Visual Studio with "Desktop development with C++" workload
+- **Android**: Android Studio with SDK and emulator setup
+- **iOS**: Xcode (macOS only) for iOS development
+- **Web**: Chrome browser for web testing
+
+### **Firebase Setup**
+- **Firebase Project** with Authentication and Firestore enabled
+- **Google Sign-In** configured for your platforms
+- **Firebase Storage** for image and audio files
+
+### **API Keys**
+- **Google Gemini AI API Key** from [Google AI Studio](https://makersuite.google.com)
+
+---
+
+## 🔑 Environment Variables
+
+Create a `.env` file in the project root directory:
+
+```env
+# Gemini AI Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Firebase Configuration (Auto-configured in main.dart)
+# These are already set up in the code but can be overridden here
+# FIREBASE_API_KEY=your_firebase_api_key
+# FIREBASE_AUTH_DOMAIN=your_auth_domain
+# FIREBASE_PROJECT_ID=your_project_id
+# FIREBASE_STORAGE_BUCKET=your_storage_bucket
+# FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+# FIREBASE_APP_ID=your_app_id
+# FIREBASE_MEASUREMENT_ID=your_measurement_id
+```
+
+> **🔒 Security Note**: `.env` is in `.gitignore`. Never commit your API keys!
+
+---
+
+## ⚡ Quick Setup (Windows PowerShell)
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/Sakshamyadav15/VocalCanvas.git
+cd VocalCanvas
+
+# 2. Install Flutter dependencies
+flutter pub get
+
+# 3. Create environment file
+notepad .env
+# Add your GEMINI_API_KEY in the file
+
+# 4. Run code analysis
+flutter analyze
+
+# 5. Run the application
+flutter run -d windows    # For desktop
+flutter run -d chrome     # For web
+flutter run -d android    # For Android (with emulator/device)
+
+# Check available devices
+flutter devices
+```
+
+### **Alternative Setup Commands**
+```powershell
+# For macOS/Linux users
+nano .env  # or vim .env
+
+# Run with specific device
+flutter run -d <device-id>
+
+# Build for release
+flutter build windows     # Desktop
+flutter build web         # Web deployment
+flutter build apk         # Android APK
+```
+
+---
+
+## 🎯 How to Test Key Features
+
+### **1. Voice Recording & AI Generation**
+1. Go to **Create** page → Tap the **microphone button**
+2. Speak a description of your artwork → Watch real-time transcription
+3. Tap microphone again → Gemini processes and generates content
+4. Review generated title, caption, hashtags, and location
+5. Upload an image and publish your post
+
+### **2. Multilingual Experience**
+1. Go to **Settings** → Change language to Hindi or Kannada
+2. Create a new post and notice AI-generated content in selected language
+3. View your profile and see multilingual fields
+
+### **3. Social Features**
+1. Browse the **Home** feed and like posts
+2. Go to **Exhibition** to see top-rated content
+3. Use **Explore** to discover posts by location or hashtag
+4. Listen to audio recordings from artists
+
+### **4. Dark Mode & Theming**
+1. Navigate to **Settings** → Toggle **Dark Mode**
+2. Experience the beautiful dark theme across all screens
+
+---
+
+## 🔍 Known Issues & Roadmap
+
+### **🚨 Current Issues**
+- **Testing Coverage**: No unit/widget tests implemented yet
+- **Error Handling**: Need more robust error handling for API failures
+- **Performance**: Large image uploads may need optimization
+- **Permissions**: Microphone permissions need proper handling on mobile
+
+### **🛠️ Planned Improvements**
+- [ ] **Comprehensive Testing Suite** - Unit and widget tests
+- [ ] **Advanced AI Features** - Image analysis with Gemini Vision
+- [ ] **Social Features** - Comments, following, notifications
+- [ ] **Marketplace Integration** - Artist commission and sales features
+- [ ] **Analytics Dashboard** - Post performance insights
+- [ ] **Offline Mode** - Local storage and sync capabilities
+
+### **🎯 Short-term Fixes**
+- [ ] Move API logic to dedicated `AIService` class
+- [ ] Add comprehensive error handling and retry mechanisms
+- [ ] Implement proper loading states and user feedback
+- [ ] Add image compression for better performance
+
+---
+
+## 🔐 Security & Privacy
+
+### **Data Protection**
+- **Environment Variables**: All sensitive keys stored in `.env` (git-ignored)
+- **Firebase Security Rules**: Configured for user data protection
+- **Audio Storage**: Secure base64 encoding for voice recordings
+- **User Privacy**: Multilingual privacy policy and terms of service
+
+### **Best Practices**
+- Never commit API keys or sensitive configuration
+- Use Firebase Security Rules for data access control
+- Implement proper user authentication flows
+- Regular security updates for dependencies
+
+---
+
+## 🚀 Deployment
+
+### **Web Deployment**
+```powershell
+flutter build web
+# Deploy the build/web folder to your hosting service
+```
+
+### **Android Release**
+```powershell
+flutter build apk --release
+flutter build appbundle --release  # For Google Play Store
+```
+
+### **Windows Desktop**
+```powershell
+flutter build windows --release
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### **Development Guidelines**
+- Follow Flutter/Dart style guidelines
+- Add tests for new features
+- Update documentation for API changes
+- Ensure multilingual support for user-facing text
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Flutter Team** for the amazing cross-platform framework
+- **Google** for Gemini AI and Firebase services
+- **Open Source Community** for excellent packages and libraries
+- **Local Artisans** who inspire this project's mission
+
+---
+
+## 💡 Why VocalCanvas?
+
+We believe **voice is an art form** and **language is culture**. By empowering artisans to express themselves in their native language, VocalCanvas helps preserve cultural authenticity while making it easier to share art globally.
+
+**VocalCanvas bridges the gap between traditional artistry and digital storytelling, ensuring that every voice is heard and every story is told.**
+
+---
+
+## 📞 Support & Contact
+
+- **Issues**: [GitHub Issues](https://github.com/Sakshamyadav15/VocalCanvas/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Sakshamyadav15/VocalCanvas/discussions)
+- **Email**: [Contact the maintainer](mailto:saksham.jadav@gmail.com)
+
+---
+
+**Made with ❤️ for artisans worldwide**
