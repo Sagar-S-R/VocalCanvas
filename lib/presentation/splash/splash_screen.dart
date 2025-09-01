@@ -80,16 +80,16 @@ class _LogoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // Use logo_dark.png for splash screen
     return Image.asset(
-      'logo_dark.png',
+      'assets/logo_dark.png',
       fit: BoxFit.contain,
       errorBuilder: (context, error, stack) {
         return Image.asset(
-          'assets/google_logo.png',
+          'assets/logo.png',
           fit: BoxFit.contain,
           errorBuilder: (context, error, stack) {
             return const FittedBox(
               fit: BoxFit.contain,
-              child: Icon(Icons.mic, color: Colors.green, size: 64),
+              child: Icon(Icons.palette, color: Colors.teal, size: 64),
             );
           },
         );
