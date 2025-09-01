@@ -2,10 +2,7 @@
   "name": "vocalcanvas",
   "version": 2,
   "framework": null,
-  "buildCommand": "flutter build web --release",
   "outputDirectory": "build/web",
-  "installCommand": "flutter pub get",
-  "devCommand": "flutter run -d chrome --web-port 3000",
   "rewrites": [
     { 
       "source": "/(.*)", 
