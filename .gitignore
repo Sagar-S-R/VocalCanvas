@@ -51,6 +51,10 @@ local.properties
 Pods/
 DerivedData/
 
+# Build directory - ignore everything except web build for Vercel
+build/
+!build/web/
+
 # Web
 web/.dart_tool/
 web/build/
