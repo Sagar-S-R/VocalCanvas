@@ -1,0 +1,11 @@
+// API Configuration for VocalCanvas
+class ApiConfig {
+  // For production deployment, replace this with your actual API key
+  // In a real production app, you'd use a secure backend proxy
+  static const String geminiApiKey = "YOUR_GEMINI_API_KEY_HERE";
+  
+  // Fallback method for development
+  static String getGeminiApiKey() {
+    return geminiApiKey;
+  }
+}

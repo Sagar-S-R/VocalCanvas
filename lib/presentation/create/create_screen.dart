@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../config/api_config.dart';
 import 'dart:convert';
 import 'widgets/voice_recorder_widget.dart'; // Import the voice recorder widget
 import '../../core/services/post_service.dart';
@@ -30,7 +30,7 @@ class _CreateScreenState extends State<CreateScreen> {
   bool _isGenerating = false;
 
   Future<String> _translateText(String text, String targetLanguage) async {
-    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    final apiKey = ApiConfig.getGeminiApiKey();
     if (apiKey.isEmpty) {
       // Fallback to simple prefixed text if no API key
       if (targetLanguage == 'Hindi') {

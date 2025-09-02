@@ -10,7 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../config/api_config.dart';
 // ...existing code...
 
 class AuthPage extends StatefulWidget {
@@ -703,7 +703,7 @@ class _AuthPageState extends State<AuthPage>
         String? locKn;
 
         // Translate using Gemini if API key is available
-        final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+        final apiKey = ApiConfig.getGeminiApiKey();
         if (apiKey.isNotEmpty) {
           try {
             final results = await Future.wait<String?>([
@@ -758,7 +758,7 @@ class _AuthPageState extends State<AuthPage>
       (s == null || s.trim().isEmpty) ? null : s.trim();
 
   Future<String?> _translateText(String text, String targetLanguage) async {
-    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    final apiKey = ApiConfig.getGeminiApiKey();
     if (apiKey.isEmpty) return null;
     if (text.trim().isEmpty) return '';
 

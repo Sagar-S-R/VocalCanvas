@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:record/record.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../../config/api_config.dart';
 import 'dart:convert';
 
 class VoiceRecorderWidget extends StatefulWidget {
@@ -45,7 +45,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
     super.initState();
     _initSpeechToText();
 
-    _apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    _apiKey = ApiConfig.getGeminiApiKey();
   }
 
   void _initSpeechToText() async {

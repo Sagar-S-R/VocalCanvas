@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,11 +18,28 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="VocalCanvas - Transform your voice into stunning visual art using AI. Multilingual voice-to-art platform with Firebase integration.">
+  <meta name="description" content="VocalCanvas - Transform your voice into stunning visual art using AI. Multilingual voice-to-art platform with Firebase integration and Google Gemini AI.">
+  <meta name="keywords" content="voice to art, AI art generator, multilingual, speech to text, visual art, VocalCanvas, Flutter, Firebase">
+  <meta name="author" content="VocalCanvas Team">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vocalcanvas.vercel.app/">
+  <meta property="og:title" content="VocalCanvas - Voice to Art AI Platform">
+  <meta property="og:description" content="Transform your voice into stunning visual art using AI. Multilingual voice-to-art platform with Firebase integration.">
+  <meta property="og:image" content="https://vocalcanvas.vercel.app/icons/Icon-512.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://vocalcanvas.vercel.app/">
+  <meta property="twitter:title" content="VocalCanvas - Voice to Art AI Platform">
+  <meta property="twitter:description" content="Transform your voice into stunning visual art using AI. Multilingual voice-to-art platform.">
+  <meta property="twitter:image" content="https://vocalcanvas.vercel.app/icons/Icon-512.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="VocalCanvas">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -35,8 +52,59 @@
   <!-- Preconnect to Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Loading styles -->
+  <style>
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      flex-direction: column;
+    }
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .loading-subtext {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
 </head>
 <body>
+  <!-- Loading screen -->
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">VocalCanvas</div>
+    <div class="loading-subtext">Transforming Voice into Art...</div>
+  </div>
+  
+  <script>
+    // Hide loading screen when Flutter app loads
+    window.addEventListener('flutter-first-frame', function () {
+      const loading = document.getElementById('loading');
+      if (loading) {
+        loading.style.display = 'none';
+      }
+    });
+  </script>
+  
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

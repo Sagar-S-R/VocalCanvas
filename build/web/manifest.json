@@ -1,13 +1,16 @@
 {
-    "name": "vocal_canvas",
-    "short_name": "vocal_canvas",
+    "name": "VocalCanvas - Voice to Art AI Platform",
+    "short_name": "VocalCanvas",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#667eea",
+    "theme_color": "#764ba2",
+    "description": "Transform your voice into stunning visual art using AI. Multilingual voice-to-art platform with Firebase integration and Google Gemini AI.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": ["productivity", "multimedia", "entertainment"],
+    "lang": "en",
+    "scope": "/",
     "icons": [
         {
             "src": "icons/Icon-192.png",
